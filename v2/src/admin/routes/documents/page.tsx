@@ -53,7 +53,7 @@ const DocumentsPage = () => {
 }
 
 export const config = defineRouteConfig({
-  label: "Documents",
+  label: "Invoices",
   icon: DocumentText,
 })
 
