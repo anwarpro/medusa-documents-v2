@@ -21,7 +21,9 @@
   ],
   "scripts": {
     "build": "medusa plugin:build && cp src/modules/documents/assets .medusa/server/src/modules/documents/assets -r",
-    "dev": "medusa plugin:develop"
+    "dev": "medusa plugin:develop",
+    "deploy": "medusa plugin:publish",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@mui/material": "^6.4.1",

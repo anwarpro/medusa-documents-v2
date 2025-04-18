@@ -10,13 +10,11 @@
  * limitations under the License.
  */
 
-export enum InvoiceTemplateKind {
-  BASIC = 'BASIC',
-  BASIC_LOGO = 'BASIC_LOGO',
-  MUSAFIR_LOGO = 'MUSAFIR_LOGO'
-}
-
-export enum PackingSlipTemplateKind {
-  BASIC = 'BASIC',
-  BASIC_SMALL = 'BASIC_SMALL'
+export function generateHr(doc, y: number) {
+  doc
+    .strokeColor("#aaaaaa")
+    .lineWidth(1)
+    .moveTo(50, y)
+    .lineTo(550, y)
+    .stroke();
 }

@@ -1,0 +1,93 @@
+"use strict";
+/*
+ * Copyright 2024 RSC-Labs, https://rsoftcon.com/
+ *
+ * MIT License
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateInvoiceTable = generateInvoiceTable;
+const hr_1 = require("./hr");
+const i18next_1 = require("i18next");
+const currency_1 = require("../../../../../../utils/currency");
+function amountToDisplay(amount, currencyCode) {
+    const decimalDigits = (0, currency_1.getDecimalDigits)(currencyCode);
+    return `${(amount / Math.pow(10, decimalDigits)).toFixed(decimalDigits)} ${currencyCode.toUpperCase()}`;
+}
+function amountToDisplayNormalized(amount, currencyCode) {
+    const decimalDigits = (0, currency_1.getDecimalDigits)(currencyCode);
+    return `${parseFloat(amount.toString()).toFixed(decimalDigits)} ${currencyCode.toUpperCase()}`;
+}
+function generateTableRow(doc, y, item, unitCost, quantity, lineTotal) {
+    doc.fontSize(10);
+    const pageHeight = doc.page.height - 80;
+    const itemHeight = doc.heightOfString(item, { width: 360 });
+    const maxHeight = Math.max(itemHeight, itemHeight);
+    const height = Math.max(maxHeight, 10);
+    let _y = y;
+    let nextY = y + height;
+    if (nextY > pageHeight) {
+        doc.addPage();
+        _y = 50;
+        nextY = _y + height;
+    }
+    doc
+        .text(item, 50, _y, { width: 360 })
+        .text(unitCost, 370, _y, { width: 60, align: "right" })
+        .text(quantity, 430, _y, { width: 30, align: "right" })
+        .text(lineTotal, 0, _y, { align: "right" });
+    return nextY;
+}
+function generateInvoiceTable(doc, y, order, items) {
+    let i;
+    const invoiceTableTop = y + 5;
+    const pageHeight = doc.page.height - 50;
+    doc.font("Bold");
+    generateTableRow(doc, invoiceTableTop, (0, i18next_1.t)("invoice-table-header-item", "Item"), (0, i18next_1.t)("invoice-table-header-unit-cost", "Unit Cost"), "Qty", (0, i18next_1.t)("invoice-table-header-line-total", "Line Total"));
+    (0, hr_1.generateHr)(doc, invoiceTableTop + 20);
+    doc.font("Regular");
+    let currentY = invoiceTableTop + 20;
+    for (i = 0; i < items.length; i++) {
+        if (currentY > pageHeight) {
+            doc.addPage();
+            currentY = 50;
+        }
+        const item = items[i];
+        currentY = generateTableRow(doc, currentY, item.product_title + " " + item.variant_title, amountToDisplayNormalized(Number(item.raw_unit_price.value), order.currency_code), item.quantity, amountToDisplayNormalized(Number(item.raw_unit_price.value) * item.quantity, order.currency_code));
+        if (currentY > pageHeight) {
+            doc.addPage();
+            currentY = 50;
+        }
+        (0, hr_1.generateHr)(doc, currentY);
+        if (currentY > pageHeight) {
+            doc.addPage();
+            currentY = 50;
+        }
+    }
+    currentY += 10;
+    if (currentY > pageHeight) {
+        doc.addPage();
+        currentY = 50;
+    }
+    generateTableRow(doc, currentY, "", (0, i18next_1.t)("invoice-table-shipping", "Shipping"), "", amountToDisplayNormalized(order.shipping_subtotal.numeric, order.currency_code));
+    currentY += 15;
+    if (currentY > pageHeight) {
+        doc.addPage();
+        currentY = 50;
+    }
+    generateTableRow(doc, currentY, "", (0, i18next_1.t)("invoice-table-tax", "Tax"), "", amountToDisplayNormalized(order.tax_total.numeric, order.currency_code));
+    currentY += 15;
+    if (currentY > pageHeight) {
+        doc.addPage();
+        currentY = 50;
+    }
+    doc.font("Bold");
+    generateTableRow(doc, currentY, "", (0, i18next_1.t)("invoice-table-total", "Total"), "", amountToDisplayNormalized(order.total.numeric, order.currency_code));
+    doc.font("Regular");
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidGFibGUuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi8uLi8uLi8uLi8uLi8uLi8uLi8uLi8uLi9zcmMvbW9kdWxlcy9kb2N1bWVudHMvc2VydmljZXMvdGVtcGxhdGVzL2ludm9pY2VzL2Jhc2ljL3BhcnRzL211c2FmaXIvdGFibGUudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IjtBQUFBOzs7Ozs7Ozs7O0dBVUc7O0FBeURILG9EQXVHQztBQTlKRCw2QkFBZ0M7QUFDaEMscUNBQTBCO0FBRTFCLCtEQUFrRTtBQUdsRSxTQUFTLGVBQWUsQ0FBQyxNQUFjLEVBQUUsWUFBb0I7SUFDekQsTUFBTSxhQUFhLEdBQUcsSUFBQSwyQkFBZ0IsRUFBQyxZQUFZLENBQUMsQ0FBQztJQUNyRCxPQUFPLEdBQUcsQ0FBQyxNQUFNLEdBQUcsSUFBSSxDQUFDLEdBQUcsQ0FBQyxFQUFFLEVBQUUsYUFBYSxDQUFDLENBQUMsQ0FBQyxPQUFPLENBQ3BELGFBQWEsQ0FDaEIsSUFBSSxZQUFZLENBQUMsV0FBVyxFQUFFLEVBQUUsQ0FBQztBQUN0QyxDQUFDO0FBRUQsU0FBUyx5QkFBeUIsQ0FDOUIsTUFBYyxFQUNkLFlBQW9CO0lBRXBCLE1BQU0sYUFBYSxHQUFHLElBQUEsMkJBQWdCLEVBQUMsWUFBWSxDQUFDLENBQUM7SUFDckQsT0FBTyxHQUFHLFVBQVUsQ0FBQyxNQUFNLENBQUMsUUFBUSxFQUFFLENBQUMsQ0FBQyxPQUFPLENBQzNDLGFBQWEsQ0FDaEIsSUFBSSxZQUFZLENBQUMsV0FBVyxFQUFFLEVBQUUsQ0FBQztBQUN0QyxDQUFDO0FBRUQsU0FBUyxnQkFBZ0IsQ0FDckIsR0FBRyxFQUNILENBQUMsRUFDRCxJQUFJLEVBQ0osUUFBUSxFQUNSLFFBQVEsRUFDUixTQUFTO0lBRVQsR0FBRyxDQUFDLFFBQVEsQ0FBQyxFQUFFLENBQUMsQ0FBQztJQUVqQixNQUFNLFVBQVUsR0FBRyxHQUFHLENBQUMsSUFBSSxDQUFDLE1BQU0sR0FBRyxFQUFFLENB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

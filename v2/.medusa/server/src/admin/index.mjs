@@ -754,6 +754,7 @@ const OrdersTab = () => {
 var InvoiceTemplateKind = /* @__PURE__ */ ((InvoiceTemplateKind2) => {
   InvoiceTemplateKind2["BASIC"] = "BASIC";
   InvoiceTemplateKind2["BASIC_LOGO"] = "BASIC_LOGO";
+  InvoiceTemplateKind2["MUSAFIR_LOGO"] = "MUSAFIR_LOGO";
   return InvoiceTemplateKind2;
 })(InvoiceTemplateKind || {});
 var PackingSlipTemplateKind = /* @__PURE__ */ ((PackingSlipTemplateKind2) => {
@@ -835,6 +836,10 @@ const ChooseTemplate$1 = (props) => {
     /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-x-3", children: [
       /* @__PURE__ */ jsx(RadioGroup.Item, { value: InvoiceTemplateKind.BASIC_LOGO.toString(), id: InvoiceTemplateKind.BASIC_LOGO.toString() }),
       /* @__PURE__ */ jsx(Label, { htmlFor: "radio_1", weight: "plus", children: "Basic with logo" })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-x-3", children: [
+      /* @__PURE__ */ jsx(RadioGroup.Item, { value: InvoiceTemplateKind.MUSAFIR_LOGO.toString(), id: InvoiceTemplateKind.MUSAFIR_LOGO.toString() }),
+      /* @__PURE__ */ jsx(Label, { htmlFor: "radio_1", weight: "plus", children: "Musafir with Logo" })
     ] })
   ] });
 };

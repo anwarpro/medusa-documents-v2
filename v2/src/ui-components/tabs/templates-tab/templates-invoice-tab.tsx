@@ -62,7 +62,7 @@ const ViewExampleInvoice = ({kind} : {kind: InvoiceTemplateKind}) => {
     .catch((error) => {
       setError(error);
       console.error(error);
-    }) 
+    })
   }, [isLoading])
   if (isLoading) {
     return (
@@ -127,6 +127,12 @@ const ChooseTemplate = (props: ChooseTemplateProps) => {
         <RadioGroup.Item value={InvoiceTemplateKind.BASIC_LOGO.toString()} id={InvoiceTemplateKind.BASIC_LOGO.toString()} />
         <Label htmlFor="radio_1" weight="plus">
           Basic with logo
+        </Label>
+      </div>
+      <div className="flex items-center gap-x-3">
+        <RadioGroup.Item value={InvoiceTemplateKind.MUSAFIR_LOGO.toString()} id={InvoiceTemplateKind.MUSAFIR_LOGO.toString()} />
+        <Label htmlFor="radio_1" weight="plus">
+          Musafir with Logo
         </Label>
       </div>
     </RadioGroup>
@@ -221,9 +227,9 @@ export const InvoiceTemplatesTab = () => {
     .catch((error) => {
       setError(error);
       console.error(error);
-    }) 
+    })
   }, [])
-  
+
   if (isLoading) {
     return (
       <CircularProgress size={12}/>
@@ -232,5 +238,5 @@ export const InvoiceTemplatesTab = () => {
 
   return (
     <TemplatesTabContent lastKind={data?.settings?.template}/>
-  )  
+  )
 }

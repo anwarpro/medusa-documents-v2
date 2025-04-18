@@ -15,6 +15,7 @@ import { DocumentInvoiceDTO, DocumentSettingsDTO } from "../../types/dto";
 import { InvoiceTemplateKind } from "../../types/template-kind";
 import basicTemplate, { validateInput as validateInputBasic} from '../templates/invoices/basic/basic'
 import basicLogoTemplate, { validateInput as validateInputBasicLogo} from '../templates/invoices/basic/basic-logo'
+import musafirLogoTemplate, { validateInput as validateInputMusafirLogo} from '../templates/invoices/basic/musafir-logo'
 
 export function validateInputForProvidedKind(templateKind: InvoiceTemplateKind, documentSettings: any) : ([boolean, string]) {
   switch (templateKind) {
@@ -22,6 +23,8 @@ export function validateInputForProvidedKind(templateKind: InvoiceTemplateKind, 
       return validateInputBasic(documentSettings);
     case InvoiceTemplateKind.BASIC_LOGO:
       return validateInputBasicLogo(documentSettings);
+    case InvoiceTemplateKind.MUSAFIR_LOGO:
+      return validateInputMusafirLogo(documentSettings);
     default:
       return [false, 'Not supported template'];
   }
@@ -33,6 +36,8 @@ export function generateInvoice(kind: InvoiceTemplateKind, documentSettings: Doc
       return basicTemplate(documentSettings, invoice, order);
     case InvoiceTemplateKind.BASIC_LOGO:
       return basicLogoTemplate(documentSettings, invoice, order);
+    case InvoiceTemplateKind.MUSAFIR_LOGO:
+      return musafirLogoTemplate(documentSettings, invoice, order);
     default:
       return Promise.resolve(Buffer.from('Not supported template'));
   }
