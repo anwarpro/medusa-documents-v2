@@ -639,7 +639,7 @@ const defaultQueryProps = {
   expand: "customer,shipping_address,billing_address,items",
   fields: "id,status,display_id,created_at,email,fulfillment_status,payment_status,total,currency_code,metadata"
 };
-const OrderTable = ({ setContextFilters }) => {
+const OrderTable$1 = ({ setContextFilters }) => {
   reactRouterDom.useLocation();
   const [ordersResult, setOrdersResult] = React.useState(void 0);
   const [isLoading, setLoading] = React.useState(true);
@@ -751,10 +751,10 @@ const OrderTable = ({ setContextFilters }) => {
     )
   ] });
 };
-const OrderTable$1 = React__default.default.memo(OrderTable);
+const OrderTable = React__default.default.memo(OrderTable$1);
 const OrdersTab = () => {
   const [contextFilters, setContextFilters] = React.useState();
-  return /* @__PURE__ */ jsxRuntime.jsx(material.Grid, { container: true, spacing: 2, children: /* @__PURE__ */ jsxRuntime.jsx(material.Grid, { item: true, xs: 12, md: 12, xl: 12, children: /* @__PURE__ */ jsxRuntime.jsx(ui.Container, { children: /* @__PURE__ */ jsxRuntime.jsx(OrderTable$1, { setContextFilters }) }) }) });
+  return /* @__PURE__ */ jsxRuntime.jsx(material.Grid, { container: true, spacing: 2, children: /* @__PURE__ */ jsxRuntime.jsx(material.Grid, { item: true, xs: 12, md: 12, xl: 12, children: /* @__PURE__ */ jsxRuntime.jsx(ui.Container, { children: /* @__PURE__ */ jsxRuntime.jsx(OrderTable, { setContextFilters }) }) }) });
 };
 var InvoiceTemplateKind = /* @__PURE__ */ ((InvoiceTemplateKind2) => {
   InvoiceTemplateKind2["BASIC"] = "BASIC";
@@ -1673,7 +1673,9 @@ const menuItemModule = {
       label: config.label,
       icon: config.icon,
       path: "/documents",
-      nested: void 0
+      nested: void 0,
+      rank: void 0,
+      translationNs: void 0
     }
   ]
 };
@@ -1681,11 +1683,13 @@ const formModule = { customFields: {} };
 const displayModule = {
   displays: {}
 };
+const i18nModule = { resources: {} };
 const plugin = {
   widgetModule,
   routeModule,
   menuItemModule,
   formModule,
-  displayModule
+  displayModule,
+  i18nModule
 };
 module.exports = plugin;

@@ -1668,7 +1668,9 @@ const menuItemModule = {
       label: config.label,
       icon: config.icon,
       path: "/documents",
-      nested: void 0
+      nested: void 0,
+      rank: void 0,
+      translationNs: void 0
     }
   ]
 };
@@ -1676,12 +1678,14 @@ const formModule = { customFields: {} };
 const displayModule = {
   displays: {}
 };
+const i18nModule = { resources: {} };
 const plugin = {
   widgetModule,
   routeModule,
   menuItemModule,
   formModule,
-  displayModule
+  displayModule,
+  i18nModule
 };
 export {
   plugin as default

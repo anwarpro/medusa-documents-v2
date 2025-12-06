@@ -26,7 +26,7 @@ export const GET = async (
   const documentsModuleService: DocumentsModuleService = req.scope.resolve(DOCUMENTS_MODULE)
 
   try {
-    const lastDocumentSettings = await documentsModuleService.listDocumentSettingses({}, {
+    const lastDocumentSettings = await documentsModuleService.listDocumentSettings({}, {
       order: {
         created_at: "DESC"
       },

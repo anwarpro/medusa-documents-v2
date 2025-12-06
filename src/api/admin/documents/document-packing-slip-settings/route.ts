@@ -27,7 +27,7 @@ export const GET = async (
   const documentsModuleService: DocumentsModuleService = req.scope.resolve(DOCUMENTS_MODULE)
 
   try {
-    const lastDocumentPackingSlipSettings = await documentsModuleService.listDocumentPackingSlipSettingses({}, {
+    const lastDocumentPackingSlipSettings = await documentsModuleService.listDocumentPackingSlipSettings({}, {
       order: {
         created_at: "DESC"
       },
