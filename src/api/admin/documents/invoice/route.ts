@@ -35,52 +35,64 @@ export const POST = async (
 
   try {
     const body: any = req.body as any;
+    
+    if (!body || !body.order_id) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        'Order ID is required'
+      );
+    }
+
     const order: OrderDTO = await orderModuleService.retrieveOrder(body.order_id, {
       select: ['*', 'item_total', 'shipping_total', 'tax_total'],
       relations: ['shipping_address', 'billing_address', 'items']
     })
-    if (order) {
-      const result = await documentsModuleService.generateInvoiceForOrder(order)
-      if (result.invoice) {
-        const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
-        const { 
-          data: [orderWithInvoice],
-        } = await query.graph({
-          entity: "order",
-          filters: {
-            id: [
-              order.id
-            ]
-          },
-          fields: [
-            "document_invoice.*",
-          ],
-        });
-        await assignInvoiceToOrderWorkflow(req.scope)
-          .run({
-            input: {
-              orderId: order.id,
-              newInvoiceId: result.invoice.id,
-              oldInvoiceId: orderWithInvoice.document_invoice ? orderWithInvoice.document_invoice.id : undefined
-            }
-          })
-
-        res.status(201).json(result);
-      } else {
-        throw new MedusaError(
-          MedusaError.Types.INVALID_DATA,
-          'Invoice not generated'
-        );
-      }
-    } else {
+    
+    if (!order) {
       throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        'Invalid order id'
+        MedusaError.Types.NOT_FOUND,
+        'Order not found'
       );
     }
-  } catch (e) {
+
+    const result = await documentsModuleService.generateInvoiceForOrder(order)
+    
+    if (!result || !result.invoice) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        'Invoice not generated'
+      );
+    }
+
+    const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
+    const { 
+      data: [orderWithInvoice],
+    } = await query.graph({
+      entity: "order",
+      filters: {
+        id: [
+          order.id
+        ]
+      },
+      fields: [
+        "document_invoice.*",
+      ],
+    });
+    
+    await assignInvoiceToOrderWorkflow(req.scope)
+      .run({
+        input: {
+          orderId: order.id,
+          newInvoiceId: result.invoice.id,
+          oldInvoiceId: orderWithInvoice.document_invoice ? orderWithInvoice.document_invoice.id : undefined
+        }
+      })
+
+    res.status(201).json(result);
+  } catch (e: any) {
+    const errorMessage = e?.message || e?.toString() || 'An error occurred while generating the invoice';
     res.status(400).json({
-        message: e.message
+      message: errorMessage
     })
   }
 }

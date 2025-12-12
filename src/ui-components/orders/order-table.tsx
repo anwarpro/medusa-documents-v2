@@ -16,6 +16,7 @@ const defaultQueryProps = {
 
 type OrderTableProps = {
   setContextFilters: (filters: Record<string, { filter: string[] }>) => void
+  searchTerm?: string
 }
 
 type OrdersResult = {
@@ -25,7 +26,7 @@ type OrdersResult = {
   orders: any[]
 }
 
-const OrderTable = ({ setContextFilters }: OrderTableProps) => {
+const OrderTable = ({ setContextFilters, searchTerm = "" }: OrderTableProps) => {
 
   const location = useLocation()
 
@@ -53,30 +54,80 @@ const OrderTable = ({ setContextFilters }: OrderTableProps) => {
   
 
   useEffect(() => {
+    setLoading(true);
+  }, [searchTerm])
+
+  useEffect(() => {
     if (!isLoading) {
       return;
     }
 
-    fetch(`/admin/orders?order=-created_at&fields=id,status,display_id,created_at,email,fulfillment_status,payment_status,total,currency_code,metadata,items,*customer`, {
+    // Fetch all orders - we'll filter client-side by display_id
+    const url = `/admin/orders?order=-created_at&fields=id,status,display_id,created_at,email,fulfillment_status,payment_status,total,currency_code,metadata,items,*customer`;
+
+    fetch(url, {
       credentials: "include",
     })
-    .then((res) => res.json())
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then((result) => {
-      setOrdersResult(result)
+      // Ensure result has orders array
+      if (!result || !Array.isArray(result.orders)) {
+        setOrdersResult({
+          count: 0,
+          limit: lim,
+          offset: 0,
+          orders: []
+        })
+        setLoading(false)
+        return
+      }
+
+      // Filter client-side by display_id if search term exists
+      let filteredResult = result;
+      if (searchTerm && searchTerm.trim() && Array.isArray(result.orders)) {
+        const searchLower = searchTerm.trim().toLowerCase();
+        const filteredOrders = result.orders.filter((order: any) => 
+          order.display_id?.toString().toLowerCase().includes(searchLower)
+        );
+        filteredResult = {
+          ...result,
+          orders: filteredOrders,
+          count: filteredOrders.length
+        };
+      }
+      setOrdersResult(filteredResult)
       setLoading(false)
     })
     .catch((error) => {
-      console.error(error);
+      console.error('Error fetching orders:', error);
+      setOrdersResult({
+        count: 0,
+        limit: lim,
+        offset: 0,
+        orders: []
+      })
+      setLoading(false)
     }) 
-  }, [isLoading])
+  }, [isLoading, searchTerm])
 
   useEffect(() => {
     const controlledPageCount = Math.ceil(ordersResult ? ordersResult.count / queryObject.limit : 0)
     setNumPages(controlledPageCount)
-  }, [ordersResult])
+  }, [ordersResult, queryObject.limit])
 
 
   const [columns] = useOrderTableColums()
+
+  // Ensure columns is always an array
+  const safeColumns = columns || []
+  
+  // Ensure data is always an array
+  const safeData = (ordersResult && Array.isArray(ordersResult.orders)) ? ordersResult.orders : []
 
   const {
     getTableProps,
@@ -94,8 +145,8 @@ const OrderTable = ({ setContextFilters }: OrderTableProps) => {
     state: { pageIndex },
   } = useTable(
     {
-      columns,
-      data: ordersResult ? ordersResult.orders : [],
+      columns: safeColumns,
+      data: safeData,
       manualPagination: true,
       initialState: {
         pageSize: lim,

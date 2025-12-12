@@ -1,10 +1,11 @@
 import {
   createWorkflow,
+  createStep,
   when,
   WorkflowResponse,
+  StepResponse,
 } from "@medusajs/framework/workflows-sdk"
-import { createRemoteLinkStep, dismissRemoteLinkStep } from "@medusajs/medusa/core-flows";
-import { Modules } from "@medusajs/framework/utils";
+import { Modules, ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { DOCUMENTS_MODULE } from "../modules/documents";
 
 type AssignPackingSlipToOrderInput = {
@@ -12,6 +13,30 @@ type AssignPackingSlipToOrderInput = {
   newPackingSlipId: string,
   oldPackingSlipId?: string
 }
+
+// Custom step to create remote link without importing from core-flows
+const createRemoteLinkStep = createStep(
+  "create-remote-link",
+  async (input: Array<Record<string, Record<string, string>>>, { container }) => {
+    const link = container.resolve(ContainerRegistrationKeys.LINK);
+    for (const linkData of input) {
+      await link.create(linkData);
+    }
+    return new StepResponse(void 0);
+  }
+);
+
+// Custom step to dismiss remote link without importing from core-flows
+const dismissRemoteLinkStep = createStep(
+  "dismiss-remote-link",
+  async (input: Array<Record<string, Record<string, string>>>, { container }) => {
+    const link = container.resolve(ContainerRegistrationKeys.LINK);
+    for (const linkData of input) {
+      await link.delete(linkData);
+    }
+    return new StepResponse(void 0);
+  }
+);
 
 const assignPackingSlipToOrderWorkflow = createWorkflow(
   "assign-packing-slip-to-order",
@@ -28,7 +53,7 @@ const assignPackingSlipToOrderWorkflow = createWorkflow(
           order_id: input.orderId
         },
         [DOCUMENTS_MODULE]: {
-          document_packing_slip_id: input.oldPackingSlipId
+          document_packing_slip_id: input.oldPackingSlipId!
         }
       }])
     })

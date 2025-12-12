@@ -15,7 +15,11 @@ import { useState} from 'react'
 import { Grid } from "@mui/material";
 import OrderTable from "../orders/order-table";
 
-export const OrdersTab = () => {
+type OrdersTabProps = {
+  searchTerm?: string;
+}
+
+export const OrdersTab = ({ searchTerm = "" }: OrdersTabProps) => {
   const [contextFilters, setContextFilters] =
     useState<Record<string, { filter: string[] }>>()
 
@@ -23,7 +27,7 @@ export const OrdersTab = () => {
     <Grid container spacing={2}  >
       <Grid item xs={12} md={12} xl={12}>
         <Container>
-          <OrderTable setContextFilters={setContextFilters} />
+          <OrderTable setContextFilters={setContextFilters} searchTerm={searchTerm} />
         </Container>
       </Grid>
     </Grid>
