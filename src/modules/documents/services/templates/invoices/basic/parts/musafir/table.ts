@@ -36,7 +36,9 @@ function amountToDisplayNormalized(
 function generateTableRow(
     doc,
     y,
-    item,
+    itemName,
+    sku,
+    barcode,
     unitCost,
     quantity,
     lineTotal
@@ -44,9 +46,9 @@ function generateTableRow(
     doc.fontSize(10);
 
     const pageHeight = doc.page.height - 80;
-    const itemHeight = doc.heightOfString(item, {width: 360});
-    const maxHeight = Math.max(itemHeight, itemHeight);
-    const height = Math.max(maxHeight, 10);
+    const itemHeight = doc.heightOfString(itemName, {width: 150});
+    const maxHeight = Math.max(itemHeight, 20);
+    const height = Math.max(maxHeight, 20);
     let _y = y;
     let nextY = y + height;
 
@@ -57,9 +59,11 @@ function generateTableRow(
     }
 
     doc
-        .text(item, 50, _y, {width: 360})
-        .text(unitCost, 370, _y, {width: 60, align: "right"})
-        .text(quantity, 430, _y, {width: 30, align: "right"})
+        .text(itemName || "", 50, _y, {width: 150})
+        .text(sku || "", 210, _y, {width: 80})
+        .text(barcode || "", 300, _y, {width: 80})
+        .text(unitCost, 390, _y, {width: 60, align: "right"})
+        .text(quantity, 460, _y, {width: 30, align: "right"})
         .text(lineTotal, 0, _y, {align: "right"});
 
     return nextY;
@@ -79,26 +83,34 @@ export function generateInvoiceTable(
     generateTableRow(
         doc,
         invoiceTableTop,
-        t("invoice-table-header-item", "Item"),
-        t("invoice-table-header-unit-cost", "Unit Cost"),
+        "Item",
+        "SKU",
+        "Barcode",
+        "Price",
         "Qty",
-        t("invoice-table-header-line-total", "Line Total")
+        "Total"
     );
     generateHr(doc, invoiceTableTop + 20);
     doc.font("Regular");
 
-    let currentY = invoiceTableTop + 20;
+    let currentY = invoiceTableTop + 30;
     for (i = 0; i < items.length; i++) {
         if (currentY > pageHeight) {
             doc.addPage();
             currentY = 50;
         }
 
-        const item = items[i];
+        const item = items[i] as any;
+        const itemName = (item.product_title || "") + (item.variant_title ? " " + item.variant_title : "");
+        const sku = item.variant?.sku || item.sku || "";
+        const barcode = item.variant?.barcode || item.barcode || "";
+        
         currentY = generateTableRow(
             doc,
             currentY,
-            item.product_title + " " + item.variant_title,
+            itemName,
+            sku,
+            barcode,
             amountToDisplayNormalized(Number(item.raw_unit_price.value), order.currency_code),
             item.quantity,
             amountToDisplayNormalized(Number(item.raw_unit_price.value) * item.quantity, order.currency_code)
@@ -125,7 +137,9 @@ export function generateInvoiceTable(
         doc,
         currentY,
         "",
-        t("invoice-table-shipping", "Shipping"),
+        "",
+        "",
+        "Shipping",
         "",
         amountToDisplayNormalized(
             (order.shipping_subtotal as BigNumber).numeric,
@@ -142,7 +156,9 @@ export function generateInvoiceTable(
         doc,
         currentY,
         "",
-        t("invoice-table-tax", "Tax"),
+        "",
+        "",
+        "Tax",
         "",
         amountToDisplayNormalized(
             (order.tax_total as BigNumber).numeric,
@@ -160,7 +176,9 @@ export function generateInvoiceTable(
         doc,
         currentY,
         "",
-        t("invoice-table-total", "Total"),
+        "",
+        "",
+        "Total",
         "",
         amountToDisplayNormalized(
             (order.total as BigNumber).numeric,

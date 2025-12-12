@@ -16,7 +16,7 @@ import { generateHeader } from "./parts/header";
 import { generateCustomerInformation } from "./parts/customer-info";
 import { generateInvoiceTable } from "./parts/table";
 import { generateInvoiceInformation } from "./parts/invoice-info";
-import path from "path";
+import { resolveFontPath } from '../../../../utils/fonts';
 import { DocumentInvoiceDTO, DocumentSettingsDTO } from '../../../../types/dto';
 
 export function validateInput(settings?: DocumentSettingsDTO) : ([boolean, string]) { 
@@ -30,8 +30,8 @@ export function validateInput(settings?: DocumentSettingsDTO) : ([boolean, strin
 
 export default async (settings: DocumentSettingsDTO, invoice: DocumentInvoiceDTO, order: OrderDTO): Promise<Buffer> => { 
   var doc = new PDFDocument();
-  doc.registerFont('Regular', path.resolve(__dirname, '../../../../assets/fonts/IBMPlexSans-Regular.ttf'))
-  doc.registerFont('Bold', path.resolve(__dirname, '../../../../assets/fonts/IBMPlexSans-Bold.ttf'))
+  doc.registerFont('Regular', resolveFontPath('IBMPlexSans-Regular.ttf'))
+  doc.registerFont('Bold', resolveFontPath('IBMPlexSans-Bold.ttf'))
   doc.font('Regular');
 
   const buffers = []

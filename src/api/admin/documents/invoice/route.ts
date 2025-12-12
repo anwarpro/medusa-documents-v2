@@ -20,7 +20,6 @@ import DocumentsModuleService from "../../../../modules/documents/service"
 import { DOCUMENTS_MODULE } from "../../../../modules/documents"
 import { Modules } from "@medusajs/framework/utils";
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
-import assignInvoiceToOrderWorkflow from "../../../../workflows/assign-invoice"
 
 
 export const POST = async (
@@ -55,6 +54,31 @@ export const POST = async (
       );
     }
 
+    // Fetch variant data for items using query
+    const queryService = req.scope.resolve(ContainerRegistrationKeys.QUERY);
+    if (order.items && order.items.length > 0) {
+      const variantIds = order.items
+        .map(item => item.variant_id)
+        .filter((id): id is string => !!id);
+      
+      if (variantIds.length > 0) {
+        const { data: variants } = await queryService.graph({
+          entity: "product_variant",
+          fields: ["id", "sku", "barcode"],
+          filters: {
+            id: variantIds
+          }
+        });
+
+        // Map variants to items
+        const variantMap = new Map(variants.map((v: any) => [v.id, v]));
+        order.items = order.items.map((item: any) => ({
+          ...item,
+          variant: variantMap.get(item.variant_id) || null
+        }));
+      }
+    }
+
     const result = await documentsModuleService.generateInvoiceForOrder(order)
     
     if (!result || !result.invoice) {
@@ -79,14 +103,35 @@ export const POST = async (
       ],
     });
     
-    await assignInvoiceToOrderWorkflow(req.scope)
-      .run({
-        input: {
-          orderId: order.id,
-          newInvoiceId: result.invoice.id,
-          oldInvoiceId: orderWithInvoice.document_invoice ? orderWithInvoice.document_invoice.id : undefined
-        }
-      })
+    // Use link service directly instead of workflow to avoid container issues
+    const link = req.scope.resolve(ContainerRegistrationKeys.LINK);
+    
+    // Delete old invoice link if it exists
+    if (orderWithInvoice.document_invoice && orderWithInvoice.document_invoice.id) {
+      try {
+        await link.delete({
+          [Modules.ORDER]: {
+            order_id: order.id
+          },
+          [DOCUMENTS_MODULE]: {
+            document_invoice_id: orderWithInvoice.document_invoice.id
+          }
+        });
+      } catch (error) {
+        // Ignore errors when deleting non-existent link
+        console.warn('Error deleting old invoice link:', error);
+      }
+    }
+    
+    // Create new invoice link
+    await link.create({
+      [Modules.ORDER]: {
+        order_id: order.id
+      },
+      [DOCUMENTS_MODULE]: {
+        document_invoice_id: result.invoice.id
+      }
+    });
 
     res.status(201).json(result);
   } catch (e: any) {

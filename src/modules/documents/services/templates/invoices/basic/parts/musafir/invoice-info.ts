@@ -24,11 +24,11 @@ export function generateInvoiceInformation(doc, y: number, invoice: DocumentInvo
 
     doc
         .fontSize(10)
-        .text(`${t("invoice-number", "Invoice number")}:`, 350, invoiceInformationTop)
+        .text("Invoice number:", 350, invoiceInformationTop)
         .font("Bold")
         .text(invoice.displayNumber, 450, invoiceInformationTop)
         .font("Regular")
-        .text(`${t("invoice-date", "Invoice date")}:`, 350, invoiceInformationTop + 15)
+        .text("Invoice date:", 350, invoiceInformationTop + 15)
         .text(invoice.created_at.toLocaleDateString(), 450, invoiceInformationTop + 15)
         .text("Order:", 350, invoiceInformationTop + 15 + 15)
         .font("Bold")

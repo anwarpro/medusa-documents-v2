@@ -16,7 +16,7 @@ import { generateHeader } from "./parts/header"
 import { generateCustomerInformation } from "./parts/customer-info";
 import { generateItemsTable } from "./parts/table-items";
 import { generateOrderInfoTable } from "./parts/table-order-info";
-import path from "path";
+import { resolveFontPath } from '../../../../utils/fonts';
 import { DocumentPackingSlipDTO, DocumentSettingsDTO } from '../../../../types/dto';
 
 export function validateInput(settings?: DocumentSettingsDTO) : ([boolean, string]) { 
@@ -31,8 +31,8 @@ export function validateInput(settings?: DocumentSettingsDTO) : ([boolean, strin
 export default async (settings: DocumentSettingsDTO, packingSlip: DocumentPackingSlipDTO, order: OrderDTO): Promise<Buffer> => {
 
   var doc = new PDFDocument();
-  doc.registerFont('Regular', path.resolve(__dirname, '../../../../assets/fonts/IBMPlexSans-Regular.ttf'))
-  doc.registerFont('Bold', path.resolve(__dirname, '../../../../assets/fonts/IBMPlexSans-Bold.ttf'))
+  doc.registerFont('Regular', resolveFontPath('IBMPlexSans-Regular.ttf'))
+  doc.registerFont('Bold', resolveFontPath('IBMPlexSans-Bold.ttf'))
   doc.font('Regular');
 
   const buffers = []
