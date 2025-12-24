@@ -24,7 +24,7 @@ export const SettingsTab = () => {
           <Grid container direction={'column'}>
             <Grid item>
               <Heading level="h1">
-                Store information
+                Store information(update)
               </Heading>
             </Grid>
             <Grid item>
@@ -35,10 +35,10 @@ export const SettingsTab = () => {
           </Grid>
           <Grid container marginTop={5} direction={'row'} columnSpacing={2}>
             <Grid item>
-              <AddressChangeModal/>
+              <AddressChangeModal />
             </Grid>
             <Grid item>
-              <LogoChangeModal/>
+              <LogoChangeModal />
             </Grid>
           </Grid>
         </Container>
@@ -59,7 +59,7 @@ export const SettingsTab = () => {
           </Grid>
           <Grid container marginTop={5} direction={'row'} columnSpacing={2}>
             <Grid item>
-              <InvoiceSettingsModal/>
+              <InvoiceSettingsModal />
             </Grid>
           </Grid>
         </Container>

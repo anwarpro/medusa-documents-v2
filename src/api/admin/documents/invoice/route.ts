@@ -35,10 +35,34 @@ export const POST = async (
 
   try {
     const body: any = req.body as any;
-    const order: OrderDTO = await orderModuleService.retrieveOrder(body.order_id, {
+    let order: OrderDTO = await orderModuleService.retrieveOrder(body.order_id, {
       select: ['*', 'item_total', 'shipping_total', 'tax_total'],
       relations: ['shipping_address', 'billing_address', 'items']
     })
+    
+    // Enrich order items with variant data (SKU, barcode)
+    const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
+    const variantIds = order.items?.map((item: any) => item.variant_id).filter(Boolean) || [];
+    
+    if (variantIds.length > 0) {
+      const { data: variants } = await query.graph({
+        entity: "variant",
+        fields: ["id", "sku", "barcode", "metadata"],
+        filters: {
+          id: variantIds
+        }
+      });
+      
+      // Attach variant data to items
+      order.items = order.items?.map((item: any) => {
+        const variant = variants.find((v: any) => v.id === item.variant_id);
+        if (variant) {
+          item.variant = variant;
+        }
+        return item;
+      });
+    }
+    
     if (order) {
       const result = await documentsModuleService.generateInvoiceForOrder(order)
       if (result.invoice) {
@@ -114,12 +138,36 @@ export const GET = async (
       const orderModuleService: IOrderModuleService  = req.scope.resolve(
         Modules.ORDER
       );
-      const orderDto = await orderModuleService.retrieveOrder(orderId, 
+      let orderDto = await orderModuleService.retrieveOrder(orderId, 
         {
           select: ['*', 'item_total', 'shipping_total', 'tax_total'],
           relations: ['shipping_address', 'billing_address', 'items']
         }
       );
+      
+      // Enrich order items with variant data (SKU, barcode)
+      const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
+      const variantIds = orderDto.items?.map((item: any) => item.variant_id).filter(Boolean) || [];
+      
+      if (variantIds.length > 0) {
+        const { data: variants } = await query.graph({
+          entity: "variant",
+          fields: ["id", "sku", "barcode", "metadata"],
+          filters: {
+            id: variantIds
+          }
+        });
+        
+        // Attach variant data to items
+        orderDto.items = orderDto.items?.map((item: any) => {
+          const variant = variants.find((v: any) => v.id === item.variant_id);
+          if (variant) {
+            item.variant = variant;
+          }
+          return item;
+        });
+      }
+      
       const result = await documentsModuleService.getInvoice(orderDto, orderWithInvoice.document_invoice.id, includeBuffer !== undefined);
       res.status(200).json(result);
     } else {

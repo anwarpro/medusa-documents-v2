@@ -20,7 +20,7 @@ import { IOrderModuleService, OrderDTO } from "@medusajs/framework/types"
 import { InvoiceTemplateKind } from "../../../../../modules/documents/types/template-kind";
 import { DOCUMENTS_MODULE } from "../../../../../modules/documents"
 import DocumentsModuleService from "../../../../../modules/documents/service"
-import { Modules } from "@medusajs/framework/utils";
+import { Modules, ContainerRegistrationKeys } from "@medusajs/framework/utils";
 
 export const GET = async (
   req: MedusaRequest,
@@ -43,9 +43,34 @@ export const GET = async (
   })
   try {
     if (lastOrders && lastOrders.length) {
+        const order = lastOrders[0];
+        
+        // Enrich order items with variant data (SKU, barcode)
+        const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
+        const variantIds = order.items?.map(item => item.variant_id).filter(Boolean) || [];
+        
+        if (variantIds.length > 0) {
+          const { data: variants } = await query.graph({
+            entity: "variant",
+            fields: ["id", "sku", "barcode", "metadata"],
+            filters: {
+              id: variantIds
+            }
+          });
+          
+          // Attach variant data to items
+          order.items = order.items?.map((item: any) => {
+            const variant = variants.find((v: any) => v.id === item.variant_id);
+            if (variant) {
+              item.variant = variant;
+            }
+            return item;
+          });
+        }
+        
         const rawRequest = req as unknown as any;
         const templateKind = rawRequest.query.template;
-        const result = await documentsModuleService.generateTestInvoice(lastOrders[0], templateKind as InvoiceTemplateKind)
+        const result = await documentsModuleService.generateTestInvoice(order, templateKind as InvoiceTemplateKind)
         res.status(201).json(result);
     } else {
       throw new MedusaError(

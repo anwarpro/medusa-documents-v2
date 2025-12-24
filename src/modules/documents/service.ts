@@ -495,10 +495,16 @@ class DocumentsModuleService extends MedusaService({
       take: 1
     })
     if (lastDocumentSettings && lastDocumentSettings.length) {
-      const result = await this.createDocumentInvoiceSettings({});
+      const result = await this.createDocumentSettings({
+        id: undefined,
+        storeAddress: lastDocumentSettings[0].storeAddress,
+        storeLogoSource: logoSource,
+      });
       return result;
     } else {
-      const result = await this.createDocumentInvoiceSettings({})
+      const result = await this.createDocumentSettings({
+        storeLogoSource: logoSource,
+      })
       return result;
     }
   }

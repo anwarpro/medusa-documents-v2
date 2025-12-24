@@ -37,6 +37,8 @@ function generateTableRow(
     doc,
     y,
     item,
+    sku,
+    barcode,
     unitCost,
     quantity,
     lineTotal
@@ -44,7 +46,7 @@ function generateTableRow(
     doc.fontSize(10);
 
     const pageHeight = doc.page.height - 80;
-    const itemHeight = doc.heightOfString(item, {width: 360});
+    const itemHeight = doc.heightOfString(item, {width: 180});
     const maxHeight = Math.max(itemHeight, itemHeight);
     const height = Math.max(maxHeight, 10);
     let _y = y;
@@ -57,8 +59,10 @@ function generateTableRow(
     }
 
     doc
-        .text(item, 50, _y, {width: 360})
-        .text(unitCost, 370, _y, {width: 60, align: "right"})
+        .text(item, 50, _y, {width: 180})
+        .text(sku || '', 235, _y, {width: 60, align: "left"})
+        .text(barcode || '', 300, _y, {width: 65, align: "left"})
+        .text(unitCost, 370, _y, {width: 55, align: "right"})
         .text(quantity, 430, _y, {width: 30, align: "right"})
         .text(lineTotal, 0, _y, {align: "right"});
 
@@ -80,6 +84,8 @@ export function generateInvoiceTable(
         doc,
         invoiceTableTop,
         t("invoice-table-header-item", "Item"),
+        "SKU",
+        "Barcode",
         t("invoice-table-header-unit-cost", "Unit Cost"),
         "Qty",
         t("invoice-table-header-line-total", "Line Total")
@@ -95,10 +101,15 @@ export function generateInvoiceTable(
         }
 
         const item = items[i];
+        const barcode = (item as any).variant?.barcode || (item as any).metadata?.barcode || '';
+        const sku = item.variant_sku || (item as any).variant?.sku || '';
+        
         currentY = generateTableRow(
             doc,
             currentY,
             item.product_title + " " + item.variant_title,
+            sku,
+            barcode,
             amountToDisplayNormalized(Number(item.raw_unit_price.value), order.currency_code),
             item.quantity,
             amountToDisplayNormalized(Number(item.raw_unit_price.value) * item.quantity, order.currency_code)
@@ -125,6 +136,8 @@ export function generateInvoiceTable(
         doc,
         currentY,
         "",
+        "",
+        "",
         t("invoice-table-shipping", "Shipping"),
         "",
         amountToDisplayNormalized(
@@ -141,6 +154,8 @@ export function generateInvoiceTable(
     generateTableRow(
         doc,
         currentY,
+        "",
+        "",
         "",
         t("invoice-table-tax", "Tax"),
         "",
@@ -159,6 +174,8 @@ export function generateInvoiceTable(
     generateTableRow(
         doc,
         currentY,
+        "",
+        "",
         "",
         t("invoice-table-total", "Total"),
         "",
