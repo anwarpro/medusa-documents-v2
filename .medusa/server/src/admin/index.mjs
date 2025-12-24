@@ -1,9 +1,9 @@
 import { jsxs, jsx, Fragment } from "react/jsx-runtime";
+import React, { useState, useEffect, useMemo, useReducer, useRef, useCallback } from "react";
 import { defineRouteConfig } from "@medusajs/admin-sdk";
 import { toast, DropdownMenu, IconButton, TooltipProvider, Tooltip, Text, StatusBadge, Table, Container, Alert, Heading, Button, RadioGroup, Label, Tabs, FocusModal, Input, Toaster } from "@medusajs/ui";
 import { FlyingBox, EllipsisHorizontal, InformationCircle, DocumentText } from "@medusajs/icons";
 import { Grid, CircularProgress, Link, Box } from "@mui/material";
-import React, { useState, useEffect, useMemo, useReducer } from "react";
 import clsx from "clsx";
 import { useLocation } from "react-router-dom";
 import { useTable, usePagination } from "react-table";
@@ -634,10 +634,12 @@ const defaultQueryProps = {
   expand: "customer,shipping_address,billing_address,items",
   fields: "id,status,display_id,created_at,email,fulfillment_status,payment_status,total,currency_code,metadata"
 };
-const OrderTable = ({ setContextFilters }) => {
+const OrderTable = ({ setContextFilters, searchQuery }) => {
   useLocation();
   const [ordersResult, setOrdersResult] = useState(void 0);
   const [isLoading, setLoading] = useState(true);
+  const debounceTimerRef = useRef(null);
+  const isInitialMount = useRef(true);
   let hiddenColumns = ["sales_channel"];
   const {
     paginate,
@@ -646,19 +648,64 @@ const OrderTable = ({ setContextFilters }) => {
   const offs = 0;
   const lim = DEFAULT_PAGE_SIZE;
   const [numPages, setNumPages] = useState(0);
-  useEffect(() => {
-    if (!isLoading) {
-      return;
+  const fetchOrders = useCallback((searchValue) => {
+    setLoading(true);
+    const queryParams = new URLSearchParams({
+      order: "-created_at",
+      fields: "id,status,display_id,created_at,email,fulfillment_status,payment_status,total,currency_code,metadata,items,*customer"
+    });
+    if (searchValue && searchValue.trim()) {
+      const trimmedSearch = searchValue.trim();
+      queryParams.append("q", trimmedSearch);
     }
-    fetch(`/admin/orders?order=-created_at&fields=id,status,display_id,created_at,email,fulfillment_status,payment_status,total,currency_code,metadata,items,*customer`, {
+    fetch(`/admin/orders?${queryParams.toString()}`, {
       credentials: "include"
-    }).then((res) => res.json()).then((result) => {
-      setOrdersResult(result);
+    }).then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    }).then((result) => {
+      const finalResult = {
+        orders: (result == null ? void 0 : result.orders) || [],
+        count: (result == null ? void 0 : result.count) || 0,
+        limit: (result == null ? void 0 : result.limit) || DEFAULT_PAGE_SIZE,
+        offset: (result == null ? void 0 : result.offset) || 0
+      };
+      setOrdersResult(finalResult);
       setLoading(false);
     }).catch((error) => {
-      console.error(error);
+      console.error("Error fetching orders:", error);
+      if (searchValue && searchValue.trim()) {
+        setOrdersResult({ orders: [], count: 0, limit: DEFAULT_PAGE_SIZE, offset: 0 });
+      }
+      setLoading(false);
     });
-  }, [isLoading]);
+  }, []);
+  useEffect(() => {
+    fetchOrders();
+    isInitialMount.current = false;
+  }, [fetchOrders]);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      return;
+    }
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    if (!searchQuery || searchQuery.trim() === "") {
+      fetchOrders(void 0);
+      return;
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      fetchOrders(searchQuery);
+    }, 300);
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchQuery, fetchOrders]);
   useEffect(() => {
     const controlledPageCount = Math.ceil(ordersResult ? ordersResult.count / queryObject.limit : 0);
     setNumPages(controlledPageCount);
@@ -713,21 +760,24 @@ const OrderTable = ({ setContextFilters }) => {
         className: clsx({ ["relative"]: isLoading }),
         children: [
           /* @__PURE__ */ jsx(Table.Header, { children: headerGroups == null ? void 0 : headerGroups.map((headerGroup) => /* @__PURE__ */ jsx(Table.Row, { ...headerGroup.getHeaderGroupProps(), children: headerGroup.headers.map((col) => /* @__PURE__ */ jsx(Table.HeaderCell, { ...col.getHeaderProps(), children: col.render("Header") })) })) }),
-          /* @__PURE__ */ jsx(Table.Body, { ...getTableBodyProps(), children: rows.map((row) => {
-            prepareRow(row);
-            return /* @__PURE__ */ jsx(
-              Table.Row,
-              {
-                color: "inherit",
-                linkTo: row.original.id,
-                ...row.getRowProps(),
-                className: "group",
-                children: row.cells.map((cell) => {
-                  return /* @__PURE__ */ jsx(Table.Cell, { ...cell.getCellProps(), className: "inter-small-regular h-[40px]", children: cell.render("Cell") });
-                })
-              }
-            );
-          }) })
+          /* @__PURE__ */ jsxs(Table.Body, { ...getTableBodyProps(), children: [
+            rows.map((row) => {
+              prepareRow(row);
+              return /* @__PURE__ */ jsx(
+                Table.Row,
+                {
+                  color: "inherit",
+                  linkTo: row.original.id,
+                  ...row.getRowProps(),
+                  className: "group",
+                  children: row.cells.map((cell) => {
+                    return /* @__PURE__ */ jsx(Table.Cell, { ...cell.getCellProps(), className: "inter-small-regular h-[40px]", children: cell.render("Cell") });
+                  })
+                }
+              );
+            }),
+            !isLoading && rows.length === 0 && /* @__PURE__ */ jsx(Table.Row, { children: /* @__PURE__ */ jsx(Table.Cell, { className: "text-center py-8", children: searchQuery && searchQuery.trim() ? `No orders found matching "${searchQuery}"` : "No orders found" }) })
+          ] })
         ]
       }
     ),
@@ -747,9 +797,9 @@ const OrderTable = ({ setContextFilters }) => {
   ] });
 };
 const OrderTable$1 = React.memo(OrderTable);
-const OrdersTab = () => {
+const OrdersTab = ({ searchQuery }) => {
   const [contextFilters, setContextFilters] = useState();
-  return /* @__PURE__ */ jsx(Grid, { container: true, spacing: 2, children: /* @__PURE__ */ jsx(Grid, { item: true, xs: 12, md: 12, xl: 12, children: /* @__PURE__ */ jsx(Container, { children: /* @__PURE__ */ jsx(OrderTable$1, { setContextFilters }) }) }) });
+  return /* @__PURE__ */ jsx(Grid, { container: true, spacing: 2, children: /* @__PURE__ */ jsx(Grid, { item: true, xs: 12, md: 12, xl: 12, children: /* @__PURE__ */ jsx(Container, { children: /* @__PURE__ */ jsx(OrderTable$1, { setContextFilters, searchQuery }) }) }) });
 };
 var InvoiceTemplateKind = /* @__PURE__ */ ((InvoiceTemplateKind2) => {
   InvoiceTemplateKind2["BASIC"] = "BASIC";
@@ -1557,7 +1607,7 @@ const SettingsTab = () => {
   return /* @__PURE__ */ jsxs(Grid, { container: true, spacing: 2, children: [
     /* @__PURE__ */ jsx(Grid, { item: true, xs: 6, md: 6, xl: 6, children: /* @__PURE__ */ jsxs(Container, { children: [
       /* @__PURE__ */ jsxs(Grid, { container: true, direction: "column", children: [
-        /* @__PURE__ */ jsx(Grid, { item: true, children: /* @__PURE__ */ jsx(Heading, { level: "h1", children: "Store information" }) }),
+        /* @__PURE__ */ jsx(Grid, { item: true, children: /* @__PURE__ */ jsx(Heading, { level: "h1", children: "Store information(update)" }) }),
         /* @__PURE__ */ jsx(Grid, { item: true, children: /* @__PURE__ */ jsx(Text, { size: "small", children: "Change information about your store to have it included in generated documents" }) })
       ] }),
       /* @__PURE__ */ jsxs(Grid, { container: true, marginTop: 5, direction: "row", columnSpacing: 2, children: [
@@ -1622,6 +1672,7 @@ const ProTab = () => {
   ] });
 };
 const DocumentsPage = () => {
+  const [searchQuery, setSearchQuery] = useState("");
   console.log(void 0);
   return /* @__PURE__ */ jsxs(Tabs, { defaultValue: "orders", children: [
     /* @__PURE__ */ jsx(Toaster, { position: "top-right" }),
@@ -1629,11 +1680,23 @@ const DocumentsPage = () => {
       /* @__PURE__ */ jsx(Tabs.Trigger, { value: "orders", children: "Orders" }),
       /* @__PURE__ */ jsx(Tabs.Trigger, { value: "templates", children: "Templates" }),
       /* @__PURE__ */ jsx(Tabs.Trigger, { value: "settings", children: "Settings" }),
-      /* @__PURE__ */ jsx(Grid, { container: true, justifyContent: "end", children: /* @__PURE__ */ jsx(Tabs.Trigger, { value: "pro", style: { color: "purple" }, children: "Pro version" }) })
+      /* @__PURE__ */ jsxs(Grid, { container: true, justifyContent: "end", alignItems: "center", spacing: 2, style: { flex: 1, marginLeft: "auto" }, children: [
+        /* @__PURE__ */ jsx(Grid, { item: true, children: /* @__PURE__ */ jsx(
+          Input,
+          {
+            type: "text",
+            placeholder: "Search by order number...",
+            value: searchQuery,
+            onChange: (e) => setSearchQuery(e.target.value),
+            style: { minWidth: "250px" }
+          }
+        ) }),
+        /* @__PURE__ */ jsx(Grid, { item: true, children: /* @__PURE__ */ jsx(Tabs.Trigger, { value: "pro", style: { color: "purple" }, children: "Pro version" }) })
+      ] })
     ] }),
     /* @__PURE__ */ jsxs(Tabs.Content, { value: "orders", children: [
       /* @__PURE__ */ jsx(Box, { height: 20 }),
-      /* @__PURE__ */ jsx(OrdersTab, {})
+      /* @__PURE__ */ jsx(OrdersTab, { searchQuery })
     ] }),
     /* @__PURE__ */ jsxs(Tabs.Content, { value: "templates", children: [
       /* @__PURE__ */ jsx(Box, { height: 20 }),

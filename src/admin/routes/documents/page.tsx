@@ -10,8 +10,9 @@
  * limitations under the License.
  */
 
+import React, { useState } from "react";
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { Tabs, Toaster } from "@medusajs/ui"
+import { Tabs, Toaster, Input } from "@medusajs/ui"
 import { DocumentText } from "@medusajs/icons"
 import { Box, Grid } from "@mui/material";
 import { OrdersTab } from "../../../ui-components/tabs/orders-tab";
@@ -20,6 +21,7 @@ import { SettingsTab } from "../../../ui-components/tabs/settings-tab";
 import { ProTab } from "../../../ui-components/tabs/pro-tab";
 
 const DocumentsPage = () => {
+  const [searchQuery, setSearchQuery] = useState<string>("");
   console.log(import.meta.env.VITE_MEDUSA_ADMIN_MEDUSA_DOCUMENTS_HIDE_PRO);
   return (
     <Tabs defaultValue='orders'>
@@ -28,13 +30,26 @@ const DocumentsPage = () => {
         <Tabs.Trigger value='orders'>Orders</Tabs.Trigger>
         <Tabs.Trigger value='templates'>Templates</Tabs.Trigger>
         <Tabs.Trigger value='settings'>Settings</Tabs.Trigger>
-        {import.meta.env.VITE_MEDUSA_ADMIN_MEDUSA_DOCUMENTS_HIDE_PRO === undefined && <Grid container justifyContent={'end'}>
-            <Tabs.Trigger value='pro' style={ { color: 'purple' }}>Pro version</Tabs.Trigger>
-        </Grid>}
+        <Grid container justifyContent={'end'} alignItems={'center'} spacing={2} style={{ flex: 1, marginLeft: 'auto' }}>
+          <Grid item>
+            <Input
+              type="text"
+              placeholder="Search by order number..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ minWidth: '250px' }}
+            />
+          </Grid>
+          {import.meta.env.VITE_MEDUSA_ADMIN_MEDUSA_DOCUMENTS_HIDE_PRO === undefined && (
+            <Grid item>
+              <Tabs.Trigger value='pro' style={ { color: 'purple' }}>Pro version</Tabs.Trigger>
+            </Grid>
+          )}
+        </Grid>
       </Tabs.List>
       <Tabs.Content value='orders'>
         <Box height={20}></Box>
-        <OrdersTab/>
+        <OrdersTab searchQuery={searchQuery}/>
       </Tabs.Content>
       <Tabs.Content value='templates'>
         <Box height={20}></Box>
