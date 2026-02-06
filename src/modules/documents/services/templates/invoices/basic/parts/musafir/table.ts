@@ -10,18 +10,11 @@
  * limitations under the License.
  */
 
-import {generateHr} from "./hr";
-import {t} from "i18next";
-import {OrderDTO, OrderLineItemDTO} from "@medusajs/framework/types";
-import {getDecimalDigits} from "../../../../../../utils/currency";
-import {BigNumber} from "@medusajs/framework/utils";
-
-function amountToDisplay(amount: number, currencyCode: string): string {
-    const decimalDigits = getDecimalDigits(currencyCode);
-    return `${(amount / Math.pow(10, decimalDigits)).toFixed(
-        decimalDigits
-    )} ${currencyCode.toUpperCase()}`;
-}
+import { generateHr } from "./hr";
+import { t } from "i18next";
+import { OrderDTO, OrderLineItemDTO } from "@medusajs/framework/types";
+import { getDecimalDigits } from "../../../../../../utils/currency";
+import { BigNumber } from "@medusajs/framework/utils";
 
 function amountToDisplayNormalized(
     amount: number,
@@ -36,33 +29,19 @@ function amountToDisplayNormalized(
 function generateTableRow(
     doc,
     y,
-    item,
-    unitCost,
-    quantity,
-    lineTotal
+    columns: string[]
 ) {
-    doc.fontSize(10);
-
-    const pageHeight = doc.page.height - 80;
-    const itemHeight = doc.heightOfString(item, {width: 360});
-    const maxHeight = Math.max(itemHeight, itemHeight);
-    const height = Math.max(maxHeight, 10);
-    let _y = y;
-    let nextY = y + height;
-
-    if (nextY > pageHeight) {
-        doc.addPage();
-        _y = 50;
-        nextY = _y + height;
-    }
+    doc.fontSize(8); // Slightly smaller font to fit more columns
 
     doc
-        .text(item, 50, _y, {width: 360})
-        .text(unitCost, 370, _y, {width: 60, align: "right"})
-        .text(quantity, 430, _y, {width: 30, align: "right"})
-        .text(lineTotal, 0, _y, {align: "right"});
+        .text(columns[0], 50, y, { width: 180 }) // Product Title
+        .text(columns[1], 240, y, { width: 60 })  // SKU
+        .text(columns[2], 310, y, { width: 60 })  // Barcode
+        .text(columns[3], 380, y, { width: 30, align: "right" }) // Quantity
+        .text(columns[4], 420, y, { width: 60, align: "right" }) // Unit Price
+        .text(columns[5], 490, y, { width: 60, align: "right" }); // Total Price
 
-    return nextY;
+    return y + 20;
 }
 
 export function generateInvoiceTable(
@@ -71,101 +50,69 @@ export function generateInvoiceTable(
     order: OrderDTO,
     items: OrderLineItemDTO[]
 ) {
-    let i;
-    const invoiceTableTop = y + 5;
+    let currentY = y + 10;
     const pageHeight = doc.page.height - 50;
 
     doc.font("Bold");
+    doc.fontSize(14).text("Products", 50, y);
+    currentY += 20;
+
     generateTableRow(
         doc,
-        invoiceTableTop,
-        t("invoice-table-header-item", "Item"),
-        t("invoice-table-header-unit-cost", "Unit Cost"),
-        "Qty",
-        t("invoice-table-header-line-total", "Line Total")
+        currentY,
+        ["Product Title", "SKU", "Barcode", "Quantity", "Unit Price", "Total Price"]
     );
-    generateHr(doc, invoiceTableTop + 20);
+    generateHr(doc, currentY + 15);
     doc.font("Regular");
 
-    let currentY = invoiceTableTop + 20;
-    for (i = 0; i < items.length; i++) {
+    currentY += 20;
+    for (let i = 0; i < items.length; i++) {
         if (currentY > pageHeight) {
             doc.addPage();
             currentY = 50;
         }
 
         const item = items[i];
+        const unitPrice = Number(item.raw_unit_price.value);
+        const totalPrice = unitPrice * item.quantity;
+
         currentY = generateTableRow(
             doc,
             currentY,
-            item.product_title + " " + item.variant_title,
-            amountToDisplayNormalized(Number(item.raw_unit_price.value), order.currency_code),
-            item.quantity,
-            amountToDisplayNormalized(Number(item.raw_unit_price.value) * item.quantity, order.currency_code)
+            [
+                item.product_title + " " + item.variant_title,
+                item.variant_sku || "",
+                item.variant_barcode || "",
+                `${item.quantity}x`,
+                amountToDisplayNormalized(unitPrice, order.currency_code),
+                amountToDisplayNormalized(totalPrice, order.currency_code)
+            ]
         );
 
-        if (currentY > pageHeight) {
-            doc.addPage();
-            currentY = 50;
-        }
-
-        generateHr(doc, currentY);
-        if (currentY > pageHeight) {
-            doc.addPage();
-            currentY = 50;
-        }
+        generateHr(doc, currentY - 5);
+        currentY += 5;
     }
 
     currentY += 10;
-    if (currentY > pageHeight) {
-        doc.addPage();
-        currentY = 50;
-    }
-    generateTableRow(
-        doc,
-        currentY,
-        "",
-        t("invoice-table-shipping", "Shipping"),
-        "",
-        amountToDisplayNormalized(
-            (order.shipping_subtotal as BigNumber).numeric,
-            order.currency_code
-        )
-    );
+
+    // Summary Section
+    const summaryX = 350;
+    doc.fontSize(10);
+
+    doc.text("Subtotal (excl. shipping and taxes)", 50, currentY)
+        .text(amountToDisplayNormalized((order as any).item_total, order.currency_code), 0, currentY, { align: "right" });
 
     currentY += 15;
-    if (currentY > pageHeight) {
-        doc.addPage();
-        currentY = 50;
-    }
-    generateTableRow(
-        doc,
-        currentY,
-        "",
-        t("invoice-table-tax", "Tax"),
-        "",
-        amountToDisplayNormalized(
-            (order.tax_total as BigNumber).numeric,
-            order.currency_code
-        )
-    );
+    doc.text("Shipping", 50, currentY)
+        .text(amountToDisplayNormalized((order.shipping_total as BigNumber).numeric, order.currency_code), 0, currentY, { align: "right" });
 
     currentY += 15;
-    if (currentY > pageHeight) {
-        doc.addPage();
-        currentY = 50;
-    }
-    doc.font("Bold");
-    generateTableRow(
-        doc,
-        currentY,
-        "",
-        t("invoice-table-total", "Total"),
-        "",
-        amountToDisplayNormalized(
-            (order.total as BigNumber).numeric,
-            order.currency_code
-        )
-    );
-    doc.font("Regular");
+    doc.text("Taxes", 50, currentY)
+        .text(amountToDisplayNormalized((order.tax_total as BigNumber).numeric, order.currency_code), 0, currentY, { align: "right" });
+
+    currentY += 25;
+    generateHr(doc, currentY - 5);
+    doc.font("Bold").fontSize(12);
+    doc.text("Total", 50, currentY)
+        .text(amountToDisplayNormalized((order.total as BigNumber).numeric, order.currency_code), 0, currentY, { align: "right" });
 }

@@ -52,7 +52,7 @@ class DocumentsModuleService extends MedusaService({
     this.options_ = options;
   }
 
-  private async resetForcedNumberByCreatingNewSettings() : Promise<any> {
+  private async resetForcedNumberByCreatingNewSettings(): Promise<any> {
     const lastDocumentInvoiceSettings = await this.listDocumentInvoiceSettings({}, {
       order: {
         created_at: "DESC"
@@ -74,7 +74,7 @@ class DocumentsModuleService extends MedusaService({
     }
   }
 
-  private async getInvoiceForcedNumber() : Promise<string | undefined> {
+  private async getInvoiceForcedNumber(): Promise<string | undefined> {
     const lastDocumentInvoiceSettings = await this.listDocumentInvoiceSettings({}, {
       order: {
         created_at: "DESC"
@@ -125,7 +125,7 @@ class DocumentsModuleService extends MedusaService({
     return '1';
   }
 
-  async getInvoice(order: OrderDTO, invoiceId: string, includeBuffer: boolean = false) : Promise<any> {
+  async getInvoice(order: OrderDTO, invoiceId: string, includeBuffer: boolean = false): Promise<any> {
     if (includeBuffer) {
       const invoice = await this.retrieveDocumentInvoice(invoiceId,
         {
@@ -149,7 +149,7 @@ class DocumentsModuleService extends MedusaService({
     }
   }
 
-  async getPackingSlip(order: OrderDTO, packingSlipId: string, includeBuffer: boolean = false) : Promise<any> {
+  async getPackingSlip(order: OrderDTO, packingSlipId: string, includeBuffer: boolean = false): Promise<any> {
     if (includeBuffer) {
       const packingSlip = await this.retrieveDocumentPackingSlip(packingSlipId,
         {
@@ -173,7 +173,7 @@ class DocumentsModuleService extends MedusaService({
     }
   }
 
-  async generateTestPackingSlip(order: OrderDTO, templateKind: PackingSlipTemplateKind) : Promise<any> {
+  async generateTestPackingSlip(order: OrderDTO, templateKind: PackingSlipTemplateKind): Promise<any> {
     const lastDocumentSettings = await this.listDocumentSettings({}, {
       order: {
         created_at: "DESC"
@@ -183,7 +183,7 @@ class DocumentsModuleService extends MedusaService({
 
     if (lastDocumentSettings && lastDocumentSettings.length) {
       const nextNumber: string = await this.getNextPackingSlipNumber();
-      
+
       const [validationPassed, info] = validatePackingSlipInputForProvidedKind(templateKind, lastDocumentSettings[0]);
       if (validationPassed) {
         const testPackingSlip: DocumentPackingSlipDTO = {
@@ -212,7 +212,7 @@ class DocumentsModuleService extends MedusaService({
     }
   }
 
-  async generateTestInvoice(order: OrderDTO, templateKind: InvoiceTemplateKind) : Promise<any> {
+  async generateTestInvoice(order: OrderDTO, templateKind: InvoiceTemplateKind): Promise<any> {
     const lastDocumentSettings = await this.listDocumentSettings({}, {
       order: {
         created_at: "DESC"
@@ -222,15 +222,15 @@ class DocumentsModuleService extends MedusaService({
 
     if (lastDocumentSettings && lastDocumentSettings.length) {
       const lastInvoiceSettings = await this.listDocumentInvoiceSettings({}, {
-          order: {
-            created_at: "DESC"
-          },
-          take: 1
-        });
+        order: {
+          created_at: "DESC"
+        },
+        take: 1
+      });
       if (lastInvoiceSettings && lastInvoiceSettings.length) {
         const invoiceSettings: any = lastInvoiceSettings[0];
         const nextNumber: string = await this.getNextInvoiceNumber();
-        
+
         const [validationPassed, info] = validateInputForProvidedKind(templateKind, lastDocumentSettings[0]);
         if (validationPassed) {
           const testInvoice: DocumentInvoiceDTO = {
@@ -265,14 +265,14 @@ class DocumentsModuleService extends MedusaService({
     }
   }
 
-  private calculateTemplateKind(documentInvoiceSettings: any) : InvoiceTemplateKind {
+  private calculateTemplateKind(documentInvoiceSettings: any): InvoiceTemplateKind {
     if (documentInvoiceSettings && documentInvoiceSettings.template) {
       return documentInvoiceSettings.template as InvoiceTemplateKind;
     }
     return InvoiceTemplateKind.BASIC;
   }
 
-  async generateInvoiceForOrder(order?: OrderDTO) : Promise<any> { 
+  async generateInvoiceForOrder(order?: OrderDTO): Promise<any> {
     if (order) {
       const lastDocumentSettings = await this.listDocumentSettings({}, {
         order: {
@@ -332,14 +332,14 @@ class DocumentsModuleService extends MedusaService({
     return undefined;
   }
 
-  private calculatePackingSlipTemplateKind(documentPackingSlipSettings: any) : PackingSlipTemplateKind {
+  private calculatePackingSlipTemplateKind(documentPackingSlipSettings: any): PackingSlipTemplateKind {
     if (documentPackingSlipSettings && documentPackingSlipSettings.template) {
       return documentPackingSlipSettings.template as PackingSlipTemplateKind;
     }
     return PackingSlipTemplateKind.BASIC;
   }
 
-  async generatePackingSlipForOrder(order: OrderDTO) : Promise<any> { 
+  async generatePackingSlipForOrder(order: OrderDTO): Promise<any> {
     const lastDocumentSettings = await this.listDocumentSettings({}, {
       order: {
         created_at: "DESC"
@@ -358,7 +358,7 @@ class DocumentsModuleService extends MedusaService({
         const packingSlipSettings: any = lastDocumentPackingSlipSettings[0];
         const calculatedTemplateKind = this.calculatePackingSlipTemplateKind(lastDocumentPackingSlipSettings[0]);
         const [validationPassed, info] = validatePackingSlipInputForProvidedKind(calculatedTemplateKind, lastDocumentSettings[0]);
-        
+
         if (validationPassed) {
           const nextNumber: string = await this.getNextPackingSlipNumber();
 
@@ -397,7 +397,7 @@ class DocumentsModuleService extends MedusaService({
     }
   }
 
-  async updateInvoiceTemplate(invoiceTemplate?: InvoiceTemplateKind) : Promise<any> {
+  async updateInvoiceTemplate(invoiceTemplate?: InvoiceTemplateKind): Promise<any> {
     const lastDocumentInvoiceSettings = await this.listDocumentInvoiceSettings({}, {
       order: {
         created_at: "DESC"
@@ -406,19 +406,19 @@ class DocumentsModuleService extends MedusaService({
     })
     if (lastDocumentInvoiceSettings && lastDocumentInvoiceSettings.length) {
       const newDocumentSettings = {
-        template : invoiceTemplate ?? lastDocumentInvoiceSettings[0].template,
+        template: invoiceTemplate ?? lastDocumentInvoiceSettings[0].template,
       }
       const result = await this.createDocumentInvoiceSettings(newDocumentSettings)
       return result;
     } else {
       const result = await this.createDocumentInvoiceSettings({
-        template : invoiceTemplate
+        template: invoiceTemplate
       })
       return result;
     }
   }
 
-  async updatePackingSlipTemplate(packingSlipTemplate?: PackingSlipTemplateKind) : Promise<any> {
+  async updatePackingSlipTemplate(packingSlipTemplate?: PackingSlipTemplateKind): Promise<any> {
     const lastDocumentPackingSlipSettings = await this.listDocumentPackingSlipSettings({}, {
       order: {
         created_at: "DESC"
@@ -427,19 +427,19 @@ class DocumentsModuleService extends MedusaService({
     })
     if (lastDocumentPackingSlipSettings && lastDocumentPackingSlipSettings.length) {
       const newDocumentSettings = {
-        template : packingSlipTemplate ?? lastDocumentPackingSlipSettings[0].template,
+        template: packingSlipTemplate ?? lastDocumentPackingSlipSettings[0].template,
       }
       const result = await this.createDocumentPackingSlipSettings(newDocumentSettings)
       return result;
     } else {
       const result = await this.createDocumentPackingSlipSettings({
-        template : packingSlipTemplate
+        template: packingSlipTemplate
       })
       return result;
     }
   }
 
-  async updatePackingSlipSettings(newFormatNumber?: string, forcedNumber?: string, template?: PackingSlipTemplateKind) : Promise<any> {
+  async updatePackingSlipSettings(newFormatNumber?: string, forcedNumber?: string, template?: PackingSlipTemplateKind): Promise<any> {
     const lastDocumentPackingSlipSettings = await this.listDocumentPackingSlipSettings({}, {
       order: {
         created_at: "DESC"
@@ -449,21 +449,21 @@ class DocumentsModuleService extends MedusaService({
     if (lastDocumentPackingSlipSettings && lastDocumentPackingSlipSettings.length) {
       const result = await this.createDocumentPackingSlipSettings({
         numberFormat: newFormatNumber ?? lastDocumentPackingSlipSettings[0].numberFormat,
-        forcedNumber : forcedNumber ? parseInt(forcedNumber) : lastDocumentPackingSlipSettings[0].forcedNumber,
-        template : template ?? lastDocumentPackingSlipSettings[0].template,
+        forcedNumber: forcedNumber ? parseInt(forcedNumber) : lastDocumentPackingSlipSettings[0].forcedNumber,
+        template: template ?? lastDocumentPackingSlipSettings[0].template,
       })
       return result;
     } else {
       const result = await this.createDocumentPackingSlipSettings({
         numberFormat: newFormatNumber,
-        forcedNumber : forcedNumber ? parseInt(forcedNumber) : undefined,
-        template : template
+        forcedNumber: forcedNumber ? parseInt(forcedNumber) : undefined,
+        template: template
       })
       return result;
     }
   }
 
-  async updateInvoiceSettings(newFormatNumber?: string, forcedNumber?: string, invoiceTemplate?: InvoiceTemplateKind) : Promise<any> {
+  async updateInvoiceSettings(newFormatNumber?: string, forcedNumber?: string, invoiceTemplate?: InvoiceTemplateKind): Promise<any> {
     const lastDocumentInvoiceSettings = await this.listDocumentInvoiceSettings({}, {
       order: {
         created_at: "DESC"
@@ -473,21 +473,21 @@ class DocumentsModuleService extends MedusaService({
     if (lastDocumentInvoiceSettings && lastDocumentInvoiceSettings.length) {
       const result = await this.createDocumentInvoiceSettings({
         numberFormat: newFormatNumber ?? lastDocumentInvoiceSettings[0].numberFormat,
-        forcedNumber : forcedNumber ? parseInt(forcedNumber) : lastDocumentInvoiceSettings[0].forcedNumber,
-        template : invoiceTemplate ?? lastDocumentInvoiceSettings[0].template,
+        forcedNumber: forcedNumber ? parseInt(forcedNumber) : lastDocumentInvoiceSettings[0].forcedNumber,
+        template: invoiceTemplate ?? lastDocumentInvoiceSettings[0].template,
       })
       return result;
     } else {
       const result = await this.createDocumentInvoiceSettings({
         numberFormat: newFormatNumber,
-        forcedNumber : forcedNumber ? parseInt(forcedNumber) : undefined,
-        template : invoiceTemplate
+        forcedNumber: forcedNumber ? parseInt(forcedNumber) : undefined,
+        template: invoiceTemplate
       })
       return result;
     }
   }
 
-  async updateStoreLogo(logoSource: string) : Promise<any> {
+  async updateStoreLogo(logoSource: string): Promise<any> {
     const lastDocumentSettings = await this.listDocumentSettings({}, {
       order: {
         created_at: "DESC"
@@ -495,15 +495,20 @@ class DocumentsModuleService extends MedusaService({
       take: 1
     })
     if (lastDocumentSettings && lastDocumentSettings.length) {
-      const result = await this.createDocumentInvoiceSettings({});
+      const result = await this.createDocumentSettings({
+        storeAddress: lastDocumentSettings[0].storeAddress,
+        storeLogoSource: logoSource
+      });
       return result;
     } else {
-      const result = await this.createDocumentInvoiceSettings({})
+      const result = await this.createDocumentSettings({
+        storeLogoSource: logoSource
+      })
       return result;
     }
   }
 
-  async updateStoreDocumentAddress(address: DocumentAddress) : Promise<any> {
+  async updateStoreDocumentAddress(address: DocumentAddress): Promise<any> {
     const lastDocumentSettings = await this.listDocumentSettings({}, {
       order: {
         created_at: "DESC"
@@ -532,7 +537,7 @@ class DocumentsModuleService extends MedusaService({
     }
   }
 
-  async getTestDisplayNumber(formatNumber?: string, forcedNumber?: string) : Promise<string | undefined> {
+  async getTestDisplayNumber(formatNumber?: string, forcedNumber?: string): Promise<string | undefined> {
     const nextNumber: string | undefined = forcedNumber !== undefined ? forcedNumber : await this.getNextInvoiceNumber();
     if (nextNumber) {
       return formatNumber ? formatNumber.replace(INVOICE_NUMBER_PLACEHOLDER, nextNumber) : nextNumber;

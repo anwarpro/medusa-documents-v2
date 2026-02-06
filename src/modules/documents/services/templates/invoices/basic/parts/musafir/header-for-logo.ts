@@ -11,21 +11,35 @@
  */
 
 import { DocumentSettingsDTO } from '../../../../../../types/dto';
+import { OrderDTO } from "@medusajs/framework/types";
+import * as QRCode from 'qrcode';
 
-export function generateHeaderForLogo(doc, y: number, documentSettings: DocumentSettingsDTO) : number {
+export async function generateHeaderForLogo(doc, y: number, x: number, documentSettings: DocumentSettingsDTO, order: OrderDTO): Promise<number> {
   doc
-    .fillColor("#444444")
-    .fontSize(20)
-
-  const heightCompany = doc.heightOfString(documentSettings.storeAddress?.company, { width: 250 });
-
-  doc
-    .moveDown()
+    .fillColor("#000000")
+    .fontSize(12)
+    .font("Bold")
+    .text("Musafir Trading", x, y)
     .fontSize(10)
-    .text(documentSettings.storeAddress?.company, 50, heightCompany + 65, { align: "left" })
-    .text(`${documentSettings.storeAddress?.city} ${documentSettings.storeAddress?.postal_code}`, 50, heightCompany + 80, { align: "left" })
-    const heightOfAddress = doc.heightOfString(documentSettings.storeAddress?.address_1, { width: 250 })
-    doc.text(documentSettings.storeAddress?.address_1, 50, heightCompany + 95, { align: "left", width: 250 })
+    .font("Regular")
+    .text(`Bank: `, x, y + 15, { continued: true })
+    .font("Bold").text("Standard Bank")
+    .font("Regular").text(`Account Type: `, x, y + 30, { continued: true })
+    .font("Bold").text("Account Type") // Default or placeholder if not in settings
+    .font("Regular").text(`Acc.No: `, x, y + 45, { continued: true })
+    .font("Bold").text("10 111 45 88 52")
+    .font("Regular").text(`Branch: `, x, y + 60, { continued: true })
+    .font("Bold").text("1110")
+    .font("Regular");
 
-    return heightOfAddress + heightCompany + 95;
+  // QR Code Generation
+  try {
+    const qrData = `Order: ${order.display_id}\nTotal: ${(order as any).total / 100}`;
+    const qrCodeDataUrl = await QRCode.toDataURL(qrData);
+    doc.image(qrCodeDataUrl, x, y + 80, { width: 80 });
+  } catch (err) {
+    console.error('QR Code generation failed', err);
+  }
+
+  return y + 170;
 }
