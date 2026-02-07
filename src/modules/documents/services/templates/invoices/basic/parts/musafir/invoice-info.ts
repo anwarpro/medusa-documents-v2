@@ -10,30 +10,36 @@
  * limitations under the License.
  */
 
-import {DocumentInvoiceDTO} from "../../../../../../../../modules/documents/types/dto";
-import {t} from "i18next";
-import {OrderDTO} from "@medusajs/framework/types";
+import { DocumentInvoiceDTO } from "../../../../../../../../modules/documents/types/dto";
+import { t } from "i18next";
+import { OrderDTO } from "@medusajs/framework/types";
 
-export function generateInvoiceInformation(doc, y: number, invoice: DocumentInvoiceDTO, order: OrderDTO): number {
+export function generateInvoiceInformation(doc, y: number, x: number, invoice: DocumentInvoiceDTO, order: OrderDTO): number {
     doc
-        .fillColor("#444444")
-        .fontSize(20)
-        .text(t("invoice", "Invoice"), 350, y);
-
-    const invoiceInformationTop = y + 40;
-
-    doc
+        .fillColor("#000000")
         .fontSize(10)
-        .text(`${t("invoice-number", "Invoice number")}:`, 350, invoiceInformationTop)
         .font("Bold")
-        .text(invoice.displayNumber, 450, invoiceInformationTop)
+        .text(`Order date:`, x, y)
         .font("Regular")
-        .text(`${t("invoice-date", "Invoice date")}:`, 350, invoiceInformationTop + 15)
-        .text(invoice.created_at.toLocaleDateString(), 450, invoiceInformationTop + 15)
-        .text("Order:", 350, invoiceInformationTop + 15 + 15)
-        .font("Bold")
-        .text(`#${order.display_id}`, 450, invoiceInformationTop + 15 + 15)
-        .moveDown();
+        .text(`${new Date(order.created_at).toDateString()}`, x + 60, y)
 
-    return invoiceInformationTop + 30;
+        .font("Bold")
+        .text(`Order number:`, x, y + 15)
+        .font("Regular")
+        .fillColor("#3b82f6") // Blue for order number link
+        .text(`${order.display_id}`, x + 75, y + 15)
+        .fillColor("#000000")
+
+        .moveDown(0.5)
+        .font("Bold")
+        .fontSize(12)
+        .text(`Payment method`, x, y + 40)
+        .fontSize(10)
+        .font("Bold")
+        .text(`Payment details`, x, y + 55)
+        .font("Regular")
+        .text(`${(order as any).total / 100} paid at`, x, y + 70)
+        .text(`${new Date(invoice.created_at).toLocaleString()}`, x, y + 85);
+
+    return y + 100;
 }

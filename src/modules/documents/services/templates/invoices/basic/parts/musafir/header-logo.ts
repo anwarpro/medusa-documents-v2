@@ -11,17 +11,21 @@
  */
 
 export async function generateHeaderLogo(doc, y: number, logoSource: string): Promise<number> {
+    console.log(`Generating logo from: ${logoSource}`);
+    try {
+        const responseImage = await fetch(logoSource);
 
-    const responseImage = await fetch(logoSource);
-
-    if (responseImage.ok && responseImage.status == 200) {
-        const responseImageBuffer = await responseImage.arrayBuffer();
-        const responseBuffer = Buffer.from(responseImageBuffer);
-        doc
-            .image(responseBuffer, 40, y, {align: 'left', height: 40});
-    } else {
-        doc
-            .text("logo"), 50, y, {align: 'left', width: 40};
+        if (responseImage.ok && responseImage.status == 200) {
+            const responseImageBuffer = await responseImage.arrayBuffer();
+            const responseBuffer = Buffer.from(responseImageBuffer);
+            doc.image(responseBuffer, 50, y, { height: 50 });
+        } else {
+            console.error(`Failed to fetch logo: ${responseImage.status} ${responseImage.statusText}`);
+            doc.font("Bold").fontSize(20).text("MUSAFIR", 50, y);
+        }
+    } catch (error) {
+        console.error(`Error fetching logo: ${error}`);
+        doc.font("Bold").fontSize(20).text("MUSAFIR", 50, y);
     }
 
     return y;
