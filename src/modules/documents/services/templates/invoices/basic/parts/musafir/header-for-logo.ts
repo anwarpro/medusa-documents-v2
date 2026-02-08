@@ -32,11 +32,20 @@ export async function generateHeaderForLogo(doc, y: number, x: number, documentS
     .font("Bold").text("1110")
     .font("Regular");
 
-  // QR Code Generation
+  // QR Code Generation with border
   try {
-    const qrData = `Order: ${order.display_id}\nTotal: ${(order as any).total / 100}`;
+    const qrData = `WWTR9P`;
     const qrCodeDataUrl = await QRCode.toDataURL(qrData);
-    doc.image(qrCodeDataUrl, x, y + 80, { width: 80 });
+    const qrX = x;
+    const qrY = y + 80;
+    const qrSize = 80;
+
+    // Draw border/rectangle around QR code
+    doc.rect(qrX - 3, qrY - 3, qrSize + 6, qrSize + 6)
+      .stroke();
+
+    // Draw QR code
+    doc.image(qrCodeDataUrl, qrX, qrY, { width: qrSize });
   } catch (err) {
     console.error('QR Code generation failed', err);
   }
