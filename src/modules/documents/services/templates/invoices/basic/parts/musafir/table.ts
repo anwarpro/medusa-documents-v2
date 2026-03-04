@@ -69,7 +69,7 @@ export function generateInvoiceTable(
     const pageHeight = doc.page.height - BOTTOM_MARGIN;
 
     doc.font("Bold");
-    doc.fontSize(14).text("Products", 50, y);
+    doc.fontSize(14).text("Musafir Products", 50, y);
     currentY += 20;
 
     generateTableRow(
