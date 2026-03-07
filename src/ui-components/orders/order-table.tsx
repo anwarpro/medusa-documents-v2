@@ -40,35 +40,30 @@ const OrderTable = ({ setContextFilters }: OrderTableProps) => {
     queryObject,
   } = useOrderFilters(defaultQueryProps)
 
-  const offs = 0
-  const lim = DEFAULT_PAGE_SIZE
+  const offs = queryObject.offset ?? 0
+  const lim = queryObject.limit ?? DEFAULT_PAGE_SIZE
 
   const [numPages, setNumPages] = useState(0)
 
-  // const defaultQueryProps = {
-  //   expand: "customer,shipping_address,billing_address,items",
-  //   fields:
-  //     "id,status,display_id,created_at,email,fulfillment_status,payment_status,total,currency_code,metadata",
-  // }
-  
-
   useEffect(() => {
-    if (!isLoading) {
-      return;
-    }
-
-    fetch(`/admin/orders?order=-created_at&fields=id,status,display_id,created_at,email,fulfillment_status,payment_status,total,currency_code,metadata,items,*customer`, {
-      credentials: "include",
+    setLoading(true)
+    const params = new URLSearchParams({
+      order: "-created_at",
+      fields: "id,status,display_id,created_at,email,fulfillment_status,payment_status,total,currency_code,metadata,items,*customer",
+      offset: String(offs),
+      limit: String(lim),
     })
-    .then((res) => res.json())
-    .then((result) => {
-      setOrdersResult(result)
-      setLoading(false)
-    })
-    .catch((error) => {
-      console.error(error);
-    }) 
-  }, [isLoading])
+    fetch(`/admin/orders?${params}`, { credentials: "include" })
+      .then((res) => res.json())
+      .then((result) => {
+        setOrdersResult(result)
+        setLoading(false)
+      })
+      .catch((error) => {
+        console.error(error)
+        setLoading(false)
+      })
+  }, [offs, lim])
 
   useEffect(() => {
     const controlledPageCount = Math.ceil(ordersResult ? ordersResult.count / queryObject.limit : 0)
@@ -163,7 +158,7 @@ const OrderTable = ({ setContextFilters }: OrderTableProps) => {
       </Table>
       <Table.Pagination
         count={ordersResult ? ordersResult.count : 0}
-        pageSize={queryObject.offset + rows.length}
+        pageSize={lim}
         pageIndex={pageIndex}
         pageCount={pageCount}
         canPreviousPage={canPreviousPage}

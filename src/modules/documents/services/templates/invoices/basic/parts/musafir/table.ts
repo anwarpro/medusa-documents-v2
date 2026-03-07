@@ -19,6 +19,10 @@ import { BigNumber } from "@medusajs/framework/utils";
 const TOP_MARGIN = 50;
 const BOTTOM_MARGIN = 80;
 const TITLE_COLUMN_WIDTH = 130;
+// A4 default height (842pt) minus margin - fallback if doc.page is wrong
+const DEFAULT_PAGE_HEIGHT = 842 - BOTTOM_MARGIN;
+// Max row height for overflow check - prevents one long row from forcing a page per row
+const MAX_ROW_HEIGHT_FOR_CHECK = 220;
 
 function amountToDisplayNormalized(
     amount: number,
@@ -66,7 +70,8 @@ export function generateInvoiceTable(
     items: OrderLineItemDTO[]
 ) {
     let currentY = y + 10;
-    const pageHeight = doc.page.height - BOTTOM_MARGIN;
+    const rawPageHeight = doc.page?.height ? doc.page.height - BOTTOM_MARGIN : DEFAULT_PAGE_HEIGHT;
+    const pageHeight = Math.max(DEFAULT_PAGE_HEIGHT, rawPageHeight);
 
     doc.font("Bold");
     doc.fontSize(14).text("Musafir Products", 50, y);
@@ -91,9 +96,10 @@ export function generateInvoiceTable(
         // Calculate row height up-front to avoid splitting a row across pages
         const titleHeight = doc.heightOfString(item.product_title || "", { width: TITLE_COLUMN_WIDTH });
         const rowHeight = Math.max(20, titleHeight + 5);
+        const rowHeightForCheck = Math.min(MAX_ROW_HEIGHT_FOR_CHECK, rowHeight);
 
         // If the next row would overflow the usable page area, start a new page first
-        if (currentY + rowHeight > pageHeight) {
+        if (currentY + rowHeightForCheck > pageHeight) {
             doc.addPage();
             currentY = TOP_MARGIN;
         }
