@@ -16,6 +16,14 @@ import { OrderDTO, OrderLineItemDTO } from "@medusajs/framework/types";
 import { getDecimalDigits } from "../../../../../../utils/currency";
 import { BigNumber } from "@medusajs/framework/utils";
 
+const TOP_MARGIN = 50;
+const BOTTOM_MARGIN = 80;
+const TITLE_COLUMN_WIDTH = 130;
+// A4 default height (842pt) minus margin - fallback if doc.page is wrong
+const DEFAULT_PAGE_HEIGHT = 842 - BOTTOM_MARGIN;
+// Max row height for overflow check - prevents one long row from forcing a page per row
+const MAX_ROW_HEIGHT_FOR_CHECK = 220;
+
 function amountToDisplayNormalized(
     amount: number,
     currencyCode: string
@@ -40,19 +48,19 @@ function generateTableRow(
     doc.fontSize(8); // Slightly smaller font to fit more columns
 
     // Product title with text wrapping enabled
-    const titleWidth = 130;
-    const titleHeight = doc.heightOfString(columns[0], { width: titleWidth });
+    const titleHeight = doc.heightOfString(columns[0], { width: TITLE_COLUMN_WIDTH });
+    const rowHeight = Math.max(20, titleHeight + 5);
 
     doc
-        .text(columns[0], 50, y, { width: titleWidth, lineBreak: true }) // Product Title - responsive
+        .text(columns[0], 50, y, { width: TITLE_COLUMN_WIDTH, lineBreak: true }) // Product Title - responsive
         .text(columns[1], 190, y, { width: 85, lineBreak: false })  // SKU - wider
         .text(columns[2], 285, y, { width: 85, lineBreak: false })  // Barcode - wider
         .text(columns[3], 380, y, { width: 30, align: "right" }) // Qty.
-        .text(columns[4], 420, y, { width: 60, align: "right" }) // Unit Price
-        .text(columns[5], 490, y, { width: 60, align: "right" }); // Total Price
+        .text(columns[4], 420, y, { width: 60, align: "right" }) // U.Price
+        .text(columns[5], 490, y, { width: 60, align: "right" }); // T.Price
 
-    // Return the max height to account for wrapped text
-    return y + Math.max(20, titleHeight + 5);
+    // Return the next Y position for the caller
+    return y + rowHeight;
 }
 
 export function generateInvoiceTable(
@@ -62,38 +70,45 @@ export function generateInvoiceTable(
     items: OrderLineItemDTO[]
 ) {
     let currentY = y + 10;
-    const pageHeight = doc.page.height - 50;
+    const rawPageHeight = doc.page?.height ? doc.page.height - BOTTOM_MARGIN : DEFAULT_PAGE_HEIGHT;
+    const pageHeight = Math.max(DEFAULT_PAGE_HEIGHT, rawPageHeight);
 
     doc.font("Bold");
-    doc.fontSize(14).text("Products", 50, y);
+    doc.fontSize(14).text("Musafir Products", 50, y);
     currentY += 20;
 
     generateTableRow(
         doc,
         currentY,
-        ["Product Title", "SKU", "Barcode", "Qty.", "Unit Price", "Total Price"]
+        ["Product Title", "SKU", "Barcode", "Qty", "U.Price", "T.Price"]
     );
     generateHr(doc, currentY + 15);
     doc.font("Regular");
 
     currentY += 20;
     for (let i = 0; i < items.length; i++) {
-        if (currentY > pageHeight) {
-            doc.addPage();
-            currentY = 50;
-        }
-
         const item = items[i];
         // Safely handle price values
         const unitPriceValue = item.raw_unit_price?.value ?? item.unit_price ?? 0;
         const unitPrice = Number(unitPriceValue) || 0;
         const totalPrice = unitPrice * (item.quantity || 0);
 
+        // Calculate row height up-front to avoid splitting a row across pages
+        const titleHeight = doc.heightOfString(item.product_title || "", { width: TITLE_COLUMN_WIDTH });
+        const rowHeight = Math.max(20, titleHeight + 5);
+        const rowHeightForCheck = Math.min(MAX_ROW_HEIGHT_FOR_CHECK, rowHeight);
+
+        // If the next row would overflow the usable page area, start a new page first
+        if (currentY + rowHeightForCheck > pageHeight) {
+            doc.addPage();
+            currentY = TOP_MARGIN;
+        }
+
         currentY = generateTableRow(
             doc,
             currentY,
             [
-                item.product_title + " " + item.variant_title,
+                item.product_title || "",
                 item.variant_sku || "",
                 item.variant_barcode || "",
                 `${item.quantity}x`,
@@ -106,10 +121,10 @@ export function generateInvoiceTable(
         doc.strokeColor('#e5e5e5');
         generateHr(doc, currentY - 5);
         doc.strokeColor('#000000');
-        currentY += 5;
+        currentY += 10;
     }
 
-    currentY += 10;
+    currentY += 20;
 
     // Summary Section
     doc.fontSize(10);

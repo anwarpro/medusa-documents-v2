@@ -648,22 +648,25 @@ const OrderTable$1 = ({ setContextFilters }) => {
     paginate,
     queryObject
   } = useOrderFilters(defaultQueryProps);
-  const offs = 0;
-  const lim = DEFAULT_PAGE_SIZE;
+  const offs = queryObject.offset ?? 0;
+  const lim = queryObject.limit ?? DEFAULT_PAGE_SIZE;
   const [numPages, setNumPages] = React.useState(0);
   React.useEffect(() => {
-    if (!isLoading) {
-      return;
-    }
-    fetch(`/admin/orders?order=-created_at&fields=id,status,display_id,created_at,email,fulfillment_status,payment_status,total,currency_code,metadata,items,*customer`, {
-      credentials: "include"
-    }).then((res) => res.json()).then((result) => {
+    setLoading(true);
+    const params = new URLSearchParams({
+      order: "-created_at",
+      fields: "id,status,display_id,created_at,email,fulfillment_status,payment_status,total,currency_code,metadata,items,*customer",
+      offset: String(offs),
+      limit: String(lim)
+    });
+    fetch(`/admin/orders?${params}`, { credentials: "include" }).then((res) => res.json()).then((result) => {
       setOrdersResult(result);
       setLoading(false);
     }).catch((error) => {
       console.error(error);
+      setLoading(false);
     });
-  }, [isLoading]);
+  }, [offs, lim]);
   React.useEffect(() => {
     const controlledPageCount = Math.ceil(ordersResult ? ordersResult.count / queryObject.limit : 0);
     setNumPages(controlledPageCount);
@@ -740,7 +743,7 @@ const OrderTable$1 = ({ setContextFilters }) => {
       ui.Table.Pagination,
       {
         count: ordersResult ? ordersResult.count : 0,
-        pageSize: queryObject.offset + rows.length,
+        pageSize: lim,
         pageIndex,
         pageCount,
         canPreviousPage,
