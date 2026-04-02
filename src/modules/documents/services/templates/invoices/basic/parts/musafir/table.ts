@@ -48,26 +48,54 @@ function generateTableRow(
 ) {
     doc.fontSize(8);
 
-    // Calculate the actual row height needed
-    const titleHeight = doc.heightOfString(columns[0], { width: TITLE_COLUMN_WIDTH });
-    const rowHeight = Math.max(20, titleHeight + 5);
+    // Manual word wrapping for title column
+    function wrapText(text: string, maxWidth: number): string[] {
+        const words = text.split(' ');
+        const lines: string[] = [];
+        let currentLine = '';
+        
+        for (const word of words) {
+            const testLine = currentLine ? currentLine + ' ' + word : word;
+            const width = doc.widthOfString(testLine);
+            
+            if (width > maxWidth && currentLine) {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        }
+        
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        
+        return lines;
+    }
 
-    // CRITICAL: Check if this row will cause overflow BEFORE rendering ANY text
-    // If yes, we DON'T render - caller must handle page break
+    // Get wrapped lines for title
+    const titleLines = wrapText(columns[0] || '', TITLE_COLUMN_WIDTH);
+    const rowHeight = Math.max(20, titleLines.length * 12 + 5);
+
+    // Check if overflow
     if (y + rowHeight > pageHeight) {
-        return -1; // Signal that page break needed
+        return -1;
     }
     
-    // Safe to render - we have enough space for the complete row
-    // Use explicit X,Y positioning to prevent flow-based pagination
-    doc.text(columns[0], 50, y, { width: TITLE_COLUMN_WIDTH, lineBreak: true }); // Product Title
-    doc.text(columns[1], 190, y, { width: 85, lineBreak: false });  // SKU
-    doc.text(columns[2], 285, y, { width: 85, lineBreak: false });  // Barcode
-    doc.text(columns[3], 380, y, { width: 30, align: "right" }); // Qty
-    doc.text(columns[4], 420, y, { width: 60, align: "right" }); // Unit Price
-    doc.text(columns[5], 490, y, { width: 60, align: "right" }); // Total Price
+    // Render title with manual line breaks
+    let lineY = y;
+    for (const line of titleLines) {
+        doc.text(line, 50, lineY, { lineBreak: false, width: TITLE_COLUMN_WIDTH });
+        lineY += 12;
+    }
+    
+    // Render other columns at base Y (all aligned to top)
+    doc.text(columns[1] || '', 190, y, { lineBreak: false, width: 85 });
+    doc.text(columns[2] || '', 285, y, { lineBreak: false, width: 85 });
+    doc.text(columns[3] || '', 380, y, { lineBreak: false, width: 30, align: "right" });
+    doc.text(columns[4] || '', 420, y, { lineBreak: false, width: 60, align: "right" });
+    doc.text(columns[5] || '', 490, y, { lineBreak: false, width: 60, align: "right" });
 
-    // Return the next Y position for the caller
     return y + rowHeight;
 }
 
