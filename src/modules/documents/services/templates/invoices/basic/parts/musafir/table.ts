@@ -81,7 +81,7 @@ export function generateInvoiceTable(
     generateTableRow(
         doc,
         currentY,
-        ["Product Title", "SKU", "Barcode", "Qty", "U.Price", "T.Price"]
+        ["Product Title", "SKU", "Barcode", "Qty", "Unit Price", "Total Price"]
     );
     generateHr(doc, currentY + 15);
     doc.font("Regular");
@@ -111,7 +111,7 @@ export function generateInvoiceTable(
             generateTableRow(
                 doc,
                 currentY,
-                ["Product Title", "SKU", "Barcode", "Qty", "U.Price", "T.Price"]
+                ["Product Title", "SKU", "Barcode", "Qty", "Unit Price", "Total Price"]
             );
             generateHr(doc, currentY + 15);
             doc.font("Regular");
