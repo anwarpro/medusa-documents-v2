@@ -51,13 +51,14 @@ function generateTableRow(
     const titleHeight = doc.heightOfString(columns[0], { width: TITLE_COLUMN_WIDTH });
     const rowHeight = Math.max(20, titleHeight + 5);
 
-    doc
-        .text(columns[0], 50, y, { width: TITLE_COLUMN_WIDTH, lineBreak: true }) // Product Title - responsive
-        .text(columns[1], 190, y, { width: 85, lineBreak: false })  // SKU - wider
-        .text(columns[2], 285, y, { width: 85, lineBreak: false })  // Barcode - wider
-        .text(columns[3], 380, y, { width: 30, align: "right" }) // Qty.
-        .text(columns[4], 420, y, { width: 60, align: "right" }) // U.Price
-        .text(columns[5], 490, y, { width: 60, align: "right" }); // T.Price
+    // Render each column separately WITHOUT chaining to prevent PDFKit auto page breaks
+    // CRITICAL: continueOnNewPage: false prevents automatic page insertion mid-row
+    doc.text(columns[0], 50, y, { width: TITLE_COLUMN_WIDTH, lineBreak: true, continued: false }); // Product Title
+    doc.text(columns[1], 190, y, { width: 85, lineBreak: false, continued: false });  // SKU
+    doc.text(columns[2], 285, y, { width: 85, lineBreak: false, continued: false });  // Barcode
+    doc.text(columns[3], 380, y, { width: 30, align: "right", continued: false }); // Qty
+    doc.text(columns[4], 420, y, { width: 60, align: "right", continued: false }); // U.Price
+    doc.text(columns[5], 490, y, { width: 60, align: "right", continued: false }); // T.Price
 
     // Return the next Y position for the caller
     return y + rowHeight;
