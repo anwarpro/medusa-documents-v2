@@ -75,7 +75,7 @@ export function generateInvoiceTable(
     const pageHeight = Math.max(DEFAULT_PAGE_HEIGHT, rawPageHeight);
 
     doc.font("Bold");
-    doc.fontSize(14).text("Musafir Products (Updated)", 50, y);
+    doc.fontSize(14).text("Musafir Products", 50, y);
     currentY += 20;
 
     generateTableRow(
@@ -106,7 +106,7 @@ export function generateInvoiceTable(
             
             // Re-draw table header on new page
             doc.font("Bold");
-            doc.fontSize(14).text("Musafir Products (Updated)", 50, currentY);
+            doc.fontSize(14).text("Musafir Products", 50, currentY);
             currentY += 20;
             generateTableRow(
                 doc,
@@ -160,7 +160,7 @@ export function generateInvoiceTable(
         currentY = TOP_MARGIN;
     }
 
-    // Summary Section
+    // Summary Section - NO CHAINING to prevent auto page breaks
     doc.fontSize(10);
 
     // Safely handle summary values
@@ -172,21 +172,25 @@ export function generateInvoiceTable(
     const summaryX = 50;
     const summaryWidth = 500; // Alignment to match end of Total Price column (550)
 
-    doc.text("Subtotal (excl. shipping and taxes)", summaryX, currentY)
-        .text(amountToDisplayNormalized(itemTotal, order.currency_code), summaryX, currentY, { width: summaryWidth, align: "right" });
+    // Subtotal - separate calls, NO chaining
+    doc.text("Subtotal (excl. shipping and taxes)", summaryX, currentY);
+    doc.text(amountToDisplayNormalized(itemTotal, order.currency_code), summaryX, currentY, { width: summaryWidth, align: "right" });
 
     currentY += 15;
-    doc.text("Shipping", summaryX, currentY)
-        .text(amountToDisplayNormalized(shippingTotal, order.currency_code), summaryX, currentY, { width: summaryWidth, align: "right" });
+    // Shipping - separate calls, NO chaining
+    doc.text("Shipping", summaryX, currentY);
+    doc.text(amountToDisplayNormalized(shippingTotal, order.currency_code), summaryX, currentY, { width: summaryWidth, align: "right" });
 
     currentY += 15;
-    doc.text("Taxes", summaryX, currentY)
-        .text(amountToDisplayNormalized(taxTotal, order.currency_code), summaryX, currentY, { width: summaryWidth, align: "right" });
+    // Taxes - separate calls, NO chaining
+    doc.text("Taxes", summaryX, currentY);
+    doc.text(amountToDisplayNormalized(taxTotal, order.currency_code), summaryX, currentY, { width: summaryWidth, align: "right" });
 
     currentY += 25;
     doc.strokeColor('#000000').lineWidth(1);
     generateHr(doc, currentY - 5);
     doc.font("Bold").fontSize(12);
-    doc.text("Total", summaryX, currentY)
-        .text(amountToDisplayNormalized(orderTotal, order.currency_code), summaryX, currentY, { width: summaryWidth, align: "right" });
+    // Total - separate calls, NO chaining
+    doc.text("Total", summaryX, currentY);
+    doc.text(amountToDisplayNormalized(orderTotal, order.currency_code), summaryX, currentY, { width: summaryWidth, align: "right" });
 }
