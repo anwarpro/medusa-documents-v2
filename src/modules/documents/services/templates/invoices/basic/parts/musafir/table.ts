@@ -43,22 +43,29 @@ function amountToDisplayNormalized(
 function generateTableRow(
     doc,
     y,
-    columns: string[]
+    columns: string[],
+    pageHeight: number
 ) {
-    doc.fontSize(8); // Slightly smaller font to fit more columns
+    doc.fontSize(8);
 
-    // Product title with text wrapping enabled
+    // Calculate the actual row height needed
     const titleHeight = doc.heightOfString(columns[0], { width: TITLE_COLUMN_WIDTH });
     const rowHeight = Math.max(20, titleHeight + 5);
 
-    // Render each column separately WITHOUT chaining to prevent PDFKit auto page breaks
-    // CRITICAL: continueOnNewPage: false prevents automatic page insertion mid-row
-    doc.text(columns[0], 50, y, { width: TITLE_COLUMN_WIDTH, lineBreak: true, continued: false }); // Product Title
-    doc.text(columns[1], 190, y, { width: 85, lineBreak: false, continued: false });  // SKU
-    doc.text(columns[2], 285, y, { width: 85, lineBreak: false, continued: false });  // Barcode
-    doc.text(columns[3], 380, y, { width: 30, align: "right", continued: false }); // Qty
-    doc.text(columns[4], 420, y, { width: 60, align: "right", continued: false }); // U.Price
-    doc.text(columns[5], 490, y, { width: 60, align: "right", continued: false }); // T.Price
+    // CRITICAL: Check if this row will cause overflow BEFORE rendering ANY text
+    // If yes, we DON'T render - caller must handle page break
+    if (y + rowHeight > pageHeight) {
+        return -1; // Signal that page break needed
+    }
+    
+    // Safe to render - we have enough space for the complete row
+    // Use explicit X,Y positioning to prevent flow-based pagination
+    doc.text(columns[0], 50, y, { width: TITLE_COLUMN_WIDTH, lineBreak: true }); // Product Title
+    doc.text(columns[1], 190, y, { width: 85, lineBreak: false });  // SKU
+    doc.text(columns[2], 285, y, { width: 85, lineBreak: false });  // Barcode
+    doc.text(columns[3], 380, y, { width: 30, align: "right" }); // Qty
+    doc.text(columns[4], 420, y, { width: 60, align: "right" }); // Unit Price
+    doc.text(columns[5], 490, y, { width: 60, align: "right" }); // Total Price
 
     // Return the next Y position for the caller
     return y + rowHeight;
@@ -81,7 +88,8 @@ export function generateInvoiceTable(
     generateTableRow(
         doc,
         currentY,
-        ["Product Title", "SKU", "Barcode", "Qty", "Unit Price", "Total Price"]
+        ["Product Title", "SKU", "Barcode", "Qty", "Unit Price", "Total Price"],
+        pageHeight
     );
     generateHr(doc, currentY + 15);
     doc.font("Regular");
@@ -111,7 +119,8 @@ export function generateInvoiceTable(
             generateTableRow(
                 doc,
                 currentY,
-                ["Product Title", "SKU", "Barcode", "Qty", "Unit Price", "Total Price"]
+                ["Product Title", "SKU", "Barcode", "Qty", "Unit Price", "Total Price"],
+                pageHeight
             );
             generateHr(doc, currentY + 15);
             doc.font("Regular");
@@ -119,7 +128,7 @@ export function generateInvoiceTable(
         }
 
         // Render the complete row atomically
-        currentY = generateTableRow(
+        const newY = generateTableRow(
             doc,
             currentY,
             [
@@ -129,25 +138,51 @@ export function generateInvoiceTable(
                 `${item.quantity}x`,
                 amountToDisplayNormalized(unitPrice, order.currency_code),
                 amountToDisplayNormalized(totalPrice, order.currency_code)
-            ]
+            ],
+            pageHeight
         );
-
-        // CHECKPOINT 2: AFTER row rendered - verify no overflow
-        if (currentY > pageHeight) {
+        
+        // If generateTableRow returned -1, it means we need a page break
+        if (newY === -1) {
             doc.addPage();
             currentY = TOP_MARGIN;
+            
+            // Re-draw table header on new page
+            doc.font("Bold");
+            doc.fontSize(14).text("Musafir Products", 50, currentY);
+            currentY += 20;
+            generateTableRow(
+                doc,
+                currentY,
+                ["Product Title", "SKU", "Barcode", "Qty", "Unit Price", "Total Price"],
+                pageHeight
+            );
+            generateHr(doc, currentY + 15);
+            doc.font("Regular");
+            currentY += 20;
+            
+            // Now render the row again on the new page
+            currentY = generateTableRow(
+                doc,
+                currentY,
+                [
+                    item.product_title || "",
+                    item.variant_sku || "",
+                    item.variant_barcode || "",
+                    `${item.quantity}x`,
+                    amountToDisplayNormalized(unitPrice, order.currency_code),
+                    amountToDisplayNormalized(totalPrice, order.currency_code)
+                ],
+                pageHeight
+            );
+        } else {
+            currentY = newY;
         }
 
         // Draw a light border after each row
         doc.strokeColor('#e5e5e5');
         generateHr(doc, currentY - 5);
         doc.strokeColor('#000000');
-        
-        // CHECKPOINT 3: AFTER hr line - verify no overflow
-        if (currentY > pageHeight) {
-            doc.addPage();
-            currentY = TOP_MARGIN;
-        }
         
         currentY += 10;
     }
