@@ -25,7 +25,9 @@ export function validateInput(settings?: DocumentSettingsDTO): ([boolean, string
 }
 
 export default async (settings: DocumentSettingsDTO, invoice: DocumentInvoiceDTO, order: OrderDTO): Promise<Buffer> => {
-    var doc = new PDFDocument();
+    // CRITICAL: bufferPages prevents automatic page management
+    // We manually control all page breaks
+    var doc = new PDFDocument({ bufferPages: true });
     doc.registerFont('Regular', path.resolve(__dirname, '../../../../assets/fonts/IBMPlexSans-Regular.ttf'))
     doc.registerFont('Bold', path.resolve(__dirname, '../../../../assets/fonts/IBMPlexSans-Bold.ttf'))
     doc.font('Regular');
@@ -52,6 +54,12 @@ export default async (settings: DocumentSettingsDTO, invoice: DocumentInvoiceDTO
     const tableStartY = Math.max(endLeft, endMid, endRight) + 20;
 
     generateInvoiceTable(doc, tableStartY, order, order.items || []);
+    
+    // CRITICAL: Switch buffered pages for output
+    doc.switchToPage(0);
+    for (let i = 1; i < doc.bufferedPageRange().count; i++) {
+        doc.switchToPage(i);
+    }
 
     doc.end();
 
