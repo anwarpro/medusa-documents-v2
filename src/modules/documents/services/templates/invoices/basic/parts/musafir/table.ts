@@ -98,12 +98,26 @@ export function generateInvoiceTable(
         const rowHeight = Math.max(20, titleHeight + 5);
         const rowHeightForCheck = Math.min(MAX_ROW_HEIGHT_FOR_CHECK, rowHeight);
 
-        // If the next row would overflow the usable page area, start a new page first
+        // CHECKPOINT 1: BEFORE row starts - check if enough space for complete row
         if (currentY + rowHeightForCheck > pageHeight) {
             doc.addPage();
             currentY = TOP_MARGIN;
+            
+            // Re-draw table header on new page
+            doc.font("Bold");
+            doc.fontSize(14).text("Musafir Products (Updated)", 50, currentY);
+            currentY += 20;
+            generateTableRow(
+                doc,
+                currentY,
+                ["Product Title", "SKU", "Barcode", "Qty", "U.Price", "T.Price"]
+            );
+            generateHr(doc, currentY + 15);
+            doc.font("Regular");
+            currentY += 20;
         }
 
+        // Render the complete row atomically
         currentY = generateTableRow(
             doc,
             currentY,
@@ -117,14 +131,33 @@ export function generateInvoiceTable(
             ]
         );
 
+        // CHECKPOINT 2: AFTER row rendered - verify no overflow
+        if (currentY > pageHeight) {
+            doc.addPage();
+            currentY = TOP_MARGIN;
+        }
+
         // Draw a light border after each row
         doc.strokeColor('#e5e5e5');
         generateHr(doc, currentY - 5);
         doc.strokeColor('#000000');
+        
+        // CHECKPOINT 3: AFTER hr line - verify no overflow
+        if (currentY > pageHeight) {
+            doc.addPage();
+            currentY = TOP_MARGIN;
+        }
+        
         currentY += 10;
     }
 
     currentY += 20;
+
+    // CHECKPOINT: Check space for summary section
+    if (currentY + 100 > pageHeight) { // Need ~100pts for summary
+        doc.addPage();
+        currentY = TOP_MARGIN;
+    }
 
     // Summary Section
     doc.fontSize(10);
