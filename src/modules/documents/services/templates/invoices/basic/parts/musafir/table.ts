@@ -82,19 +82,26 @@ function generateTableRow(
         return -1;
     }
     
-    // Render title with manual line breaks
+    // CRITICAL: Save graphics state before rendering
+    doc.save();
+    
+    // Render title with manual line breaks - FORCE lineBreak false
     let lineY = y;
     for (const line of titleLines) {
-        doc.text(line, 50, lineY, { lineBreak: false, width: TITLE_COLUMN_WIDTH });
+        // Use absolute positioning, no auto-flow
+        doc.text(line, 50, lineY, { lineBreak: false, continued: false });
         lineY += 12;
     }
     
-    // Render other columns at base Y (all aligned to top)
-    doc.text(columns[1] || '', 190, y, { lineBreak: false, width: 85 });
-    doc.text(columns[2] || '', 285, y, { lineBreak: false, width: 85 });
-    doc.text(columns[3] || '', 380, y, { lineBreak: false, width: 30, align: "right" });
-    doc.text(columns[4] || '', 420, y, { lineBreak: false, width: 60, align: "right" });
-    doc.text(columns[5] || '', 490, y, { lineBreak: false, width: 60, align: "right" });
+    // Render other columns at base Y - FORCE lineBreak false, no chaining
+    doc.text(columns[1] || '', 190, y, { lineBreak: false, continued: false });
+    doc.text(columns[2] || '', 285, y, { lineBreak: false, continued: false });
+    doc.text(columns[3] || '', 380, y, { lineBreak: false, continued: false, align: "right" });
+    doc.text(columns[4] || '', 420, y, { lineBreak: false, continued: false, align: "right" });
+    doc.text(columns[5] || '', 490, y, { lineBreak: false, continued: false, align: "right" });
+    
+    // Restore graphics state
+    doc.restore();
 
     return y + rowHeight;
 }
@@ -137,7 +144,7 @@ export function generateInvoiceTable(
 
         // CHECKPOINT 1: BEFORE row starts - check if enough space for complete row
         if (currentY + rowHeightForCheck > pageHeight) {
-            doc.addPage({ size: [595.28, 14400] }); // CRITICAL: Use same tall page size
+            doc.addPage(); // Default A4 size
             currentY = TOP_MARGIN;
             
             // Re-draw table header on new page
@@ -172,7 +179,7 @@ export function generateInvoiceTable(
         
         // If generateTableRow returned -1, it means we need a page break
         if (newY === -1) {
-            doc.addPage({ size: [595.28, 14400] }); // CRITICAL: Use same tall page size
+            doc.addPage(); // Default A4 size
             currentY = TOP_MARGIN;
             
             // Re-draw table header on new page
@@ -219,7 +226,7 @@ export function generateInvoiceTable(
 
     // CHECKPOINT: Check space for summary section
     if (currentY + 100 > pageHeight) { // Need ~100pts for summary
-        doc.addPage({ size: [595.28, 14400] }); // CRITICAL: Use same tall page size
+        doc.addPage(); // Default A4 size
         currentY = TOP_MARGIN;
     }
 
