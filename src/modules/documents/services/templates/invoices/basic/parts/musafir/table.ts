@@ -137,7 +137,7 @@ export function generateInvoiceTable(
 
         // CHECKPOINT 1: BEFORE row starts - check if enough space for complete row
         if (currentY + rowHeightForCheck > pageHeight) {
-            doc.addPage();
+            doc.addPage({ size: [595.28, 14400] }); // CRITICAL: Use same tall page size
             currentY = TOP_MARGIN;
             
             // Re-draw table header on new page
@@ -172,7 +172,7 @@ export function generateInvoiceTable(
         
         // If generateTableRow returned -1, it means we need a page break
         if (newY === -1) {
-            doc.addPage();
+            doc.addPage({ size: [595.28, 14400] }); // CRITICAL: Use same tall page size
             currentY = TOP_MARGIN;
             
             // Re-draw table header on new page
@@ -219,7 +219,7 @@ export function generateInvoiceTable(
 
     // CHECKPOINT: Check space for summary section
     if (currentY + 100 > pageHeight) { // Need ~100pts for summary
-        doc.addPage();
+        doc.addPage({ size: [595.28, 14400] }); // CRITICAL: Use same tall page size
         currentY = TOP_MARGIN;
     }
 
