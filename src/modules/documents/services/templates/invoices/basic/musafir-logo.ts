@@ -25,9 +25,13 @@ export function validateInput(settings?: DocumentSettingsDTO): ([boolean, string
 }
 
 export default async (settings: DocumentSettingsDTO, invoice: DocumentInvoiceDTO, order: OrderDTO): Promise<Buffer> => {
-    // Create PDF without auto-pagination
-    var doc = new PDFDocument({ autoFirstPage: false });
-    doc.addPage(); // Manually add first page
+    // CRITICAL FIX: Use a very tall page to prevent automatic page breaks
+    // We'll manually add pages ourselves
+    var doc = new PDFDocument({ 
+        size: [595.28, 14400], // A4 width, but 20x normal height (14400pt vs 841.89pt)
+        autoFirstPage: true,
+        bufferPages: true // Enable page buffering for manual control
+    });
     
     doc.registerFont('Regular', path.resolve(__dirname, '../../../../assets/fonts/IBMPlexSans-Regular.ttf'))
     doc.registerFont('Bold', path.resolve(__dirname, '../../../../assets/fonts/IBMPlexSans-Bold.ttf'))
