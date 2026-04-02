@@ -74,7 +74,7 @@ export function generateInvoiceTable(
     const pageHeight = Math.max(DEFAULT_PAGE_HEIGHT, rawPageHeight);
 
     doc.font("Bold");
-    doc.fontSize(14).text("Musafir Products", 50, y);
+    doc.fontSize(14).text("Musafir Products (Updated)", 50, y);
     currentY += 20;
 
     generateTableRow(

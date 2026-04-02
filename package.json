@@ -20,7 +20,7 @@
     "pdf"
   ],
   "scripts": {
-    "build": "medusa plugin:build && cp src/modules/documents/assets .medusa/server/src/modules/documents/assets -r",
+    "build": "medusa plugin:build && mkdir -p .medusa/server/src/modules/documents && cp -r src/modules/documents/assets .medusa/server/src/modules/documents/",
     "dev": "medusa plugin:develop",
     "deploy": "medusa plugin:publish",
     "prepublishOnly": "npm run build"
