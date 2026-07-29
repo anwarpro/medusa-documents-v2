@@ -22,13 +22,15 @@ export async function generateHeaderForLogo(doc, y: number, x: number, documentS
     .text("Musafir Trading", x, y)
     .fontSize(10)
     .font("Regular")
-    .text(`Bank: `, x, y + 15, { continued: true })
+    .text(`Tax Number: `, x, y + 15, { continued: true })
+    .font("Bold").text("4120294477")
+    .font("Regular").text(`Bank: `, x, y + 30, { continued: true })
     .font("Bold").text("Standard Bank")
-    .font("Regular").text(`Account Type: `, x, y + 30, { continued: true })
+    .font("Regular").text(`Account Type: `, x, y + 45, { continued: true })
     .font("Bold").text("Account Type") // Default or placeholder if not in settings
-    .font("Regular").text(`Acc.No: `, x, y + 45, { continued: true })
+    .font("Regular").text(`Acc.No: `, x, y + 60, { continued: true })
     .font("Bold").text("10 111 45 88 52")
-    .font("Regular").text(`Branch: `, x, y + 60, { continued: true })
+    .font("Regular").text(`Branch: `, x, y + 75, { continued: true })
     .font("Bold").text("1110")
     .font("Regular");
 
@@ -37,7 +39,7 @@ export async function generateHeaderForLogo(doc, y: number, x: number, documentS
     const qrData = `WWTR9P`;
     const qrCodeDataUrl = await QRCode.toDataURL(qrData);
     const qrX = x;
-    const qrY = y + 80;
+    const qrY = y + 95;
     const qrSize = 80;
 
     // Draw border/rectangle around QR code
@@ -50,5 +52,5 @@ export async function generateHeaderForLogo(doc, y: number, x: number, documentS
     console.error('QR Code generation failed', err);
   }
 
-  return y + 170;
+  return y + 185;
 }
